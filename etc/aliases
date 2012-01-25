@@ -1,0 +1,1 @@
+alias run='ruby -Ilib bin/school_record'

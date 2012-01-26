@@ -13,7 +13,7 @@ teacher:
     * What happened today/this week/etc.?
     * When did I start and finish each topic?
     * What homework have I assigned?
-* Understand the school calendar:
+* Understand the school calendar and my timetable:
     * Know what days I see each class and prompt me that some entries are yet
       to be recorded.
     * Know what days school is in session.
@@ -263,7 +263,8 @@ instead of a day.  I envisage a directory structure like:
           calendar.yaml
           class-lists.yaml
           obstacles.yaml
-          term-dates.yaml
+          term-dates.yaml      # (no: this info contained in calendar.yaml)
+          timetable.yaml
         Sem1/
           01A/
           02B/
@@ -301,7 +302,9 @@ into a single line of text. From the description, it can extract tags like 'hw'
 and 'spec', which map to objects in their own right.
 
 Homework encapsulates a single piece of homework.  It is associated with a
-LessonRecord.
+LessonRecord.  I'm not sure if information about pieces of homework would be
+aggregated somehow, or whether they'd be retrieved simply by trawling lessons.
+I imagine the latter.
 
 Somehow I need to make a big deal about starting and ending a topic.  StartTopic
 and EndTopic classes, or a different way?
@@ -310,7 +313,144 @@ Some class needs to be able to take textual data, from the command-line or from
 a file, and chunk it into the various LessonRecord and other objects.
 DataMuncher?
 
-StudentNote...
+StudentNotes encapsulates all student notes in the system. StudentNote
+encapsulates a single note.
+
+Calendar knows about the school year.  An instance of calendar represents a
+single calendar year.  It takes its configuration from calendar.yaml.  That
+could be as simple as knowing the start and end date of each term.  It can
+determine the weeks (1A, 2B, ...) from that, and can translate between calendar
+dates (2012-06-11) and term dates (Sem1-18B-Tue).  It can tell me: what's the
+next/previous school day, or iterate over a series of school days.  I suppose a
+value object is needed to represent the school day: SchoolDay, with accessors
+`term_date` and `calendar_date`, perhaps. SchoolDay.parse(str) would be good: it
+can handle parse("3 Jun") or parse("19A-Mon") or parse("Sem2-10B-Thu").
+
+Calendar should know about Staff Days, public holidays, etc.  Things like
+excursions, assemblies, etc. are "obstacles".  Obstacles can be postponed or
+cancelled.  Public holidays and Staff Days cannot.
+
+Calendar knows that Semester 1 encompasses Terms 1 and 2, and Semester 2
+encompasses Terms 3 and 4.  *Reporting periods* are not so easy to define,
+though.
+
+I foresee Calendar having nested classes Semester, Term, CalendarEntry (to
+define public holidays etc.) and ReportingPeriod.  A single Calendar instance
+should contain all the instances of these things that it needs.  The Calendar
+class should be able to handle all sorts of useful queries about these things.
+
+There probably needs to be a class like SR::OperatingEnvironment or SR::Context
+that contains _the_ calendar, _the_ timetable, _the_ set of obstacles, etc. that
+are in use.  That one object can then be passed around or it can be accessible
+through a class variable.
+
+Timetable is configured from timetable.yaml and knows when I see each class.  It
+probably doesn't need to know what period; only the day.  Does it need to know I
+see Year 10 twice on Thursday A, for instance?  We'll see.
+
+Timetable ties in with ClassList.  Each class has a short label, a label, and a
+full name, e.g. "10", "10MT1" and "10 Mathematics 1", or something.  I will
+probably only use the short label, but it makes sense to store the others.  If
+another teacher used this and had two Year 7 classes, for instance, they could
+use the short labels to distinguish them, like 7A and 7B.
+
+Obstacle should be a pretty simple class, maybe just a value object with the
+date, the class label, and the reason. Although I didn't think so before, the
+Calendar object should probably just own an array of Obstacles. It can then
+sensibly implement Calendar#lessons("5 May"), etc.
+
+Of course, a very significant class is Report.  But really, it's more of a
+namespace.  Each different type of report will have its own class, like
+SR::Report::Homework.  This class would take the arguments given, check they're
+valid, use the SR::Homework class to get the necessary data, then format a
+report.
 
 
+## Some thoughts on configuration
 
+timetable.yaml:
+
+    WeekA:
+     - Mon: "10,11,7,12"
+     - Tue: "10,12,11,7"
+     - Wed: "11,12,7,10"
+     - Thu: "10,10,7,12"
+     - Fri: "11,11,10,7"
+    WeekB:
+     - Mon: "10,7,12,11"
+     - Tue: "10,12,12,7"
+     - Wed: "12,11,10,7"
+     - Thu: "10,10,7,11"
+     - Fri: "10,7,12,11"
+
+calendar.yaml:
+
+    Term1:
+      - "2012-01-30"
+      - "10 weeks"
+    Term2:
+      - "2012-04-25"    # making this up
+      - "9 weeks"
+    Term 3: ...
+    Term 4: ...
+    ReportingPeriods:
+      - rp1: ["2012-01-30", "2012-05-21"]
+      - rp2: ["2012-06-07", "2012-09-13"]
+    StaffDays:
+      - "2012-01-30"
+      - "2012-01-31"
+      - ...
+    PublicHolidays:
+      - "2012-04-25"
+      - ...
+    SpeechDay: "2012-12-07"
+
+obstacles.yaml:
+
+    Term1:
+      - ...
+    Term2:
+      - date: 3 June
+        year: all
+        reason: Public holiday (...)
+      - date: 12B-Wed
+        year: 7
+        reason: Geography excursion
+      - dates: ["9A-Mon", "9A-Thu"]
+        year: 7
+        reason: Exams
+    Term3:
+      - ...
+    Term4:
+      - ...
+
+class-lists.yaml:
+
+    Year7:
+      label: '7'
+      name: '7MTB2'
+      fullname: '7 Mathematics B2'
+      students:
+        - Jessica Hordern
+        - Samantha Barrett
+        - Jeanine Foy
+        - ...
+    Year10:
+      label: '10'
+      name: '10MT1'
+      fullname: '10 Mathematics 1 (accelerated)'
+      students:
+        - Mikaela Achie
+        - Anna-Louise Bayfield
+        - Vanessa Chan
+        - Karen Chen
+        - Ally Cooper
+        - Elise Crimmins
+        - Milena | De Silva      # note special separator for surname
+        - ...
+
+
+    # Thought: class-lists.yaml could also record dates of entry and exit into
+      the class, enabling the program to work out who was in the class on a
+      given date.  People who leave the class can't just disappear from the
+      list, because then any notes about them would not resolve.

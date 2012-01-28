@@ -16,7 +16,7 @@ module SchoolRecord
     def sr_err(code, *args)
       method_name = code
       if SR::ErrorHandling.respond_to? method_name
-        SR::ErrorHandling.send(method_name, args)
+        SR::ErrorHandling.send(method_name, *args)
       else
         sr_int "No such error handling method: #{code}"
       end
@@ -37,5 +37,17 @@ module SchoolRecord
       raise SR::SRError, msg
     end
 
+    def multiple_students_match *args
+      fragment, label, matches = args.shift(3)
+      msg =  "Attempt to match name #{fragment} in class #{label}.\n"
+      msg << "Multiple students match: #{matches.join(', ')}"
+      raise SR::SRError, msg
+    end
+
+    def invalid_name_fragment *args
+      fragment = args.shift
+      msg = "Cannot resolve name fragment #{fragment}: the format is invalid"
+      raise SR::SRError, msg
+    end
   end
 end

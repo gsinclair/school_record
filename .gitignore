@@ -2,3 +2,6 @@
 .bundle
 Gemfile.lock
 pkg/*
+debug.log
+tags
+etc/dev-db/notes.yaml

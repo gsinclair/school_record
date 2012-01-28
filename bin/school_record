@@ -10,7 +10,7 @@ rescue SR::SRError => e
   puts Col(e.message).yb
   puts e.backtrace
 rescue SR::SRInternalError => e
-  puts Col("SchoolRecord ", "internal", "error occurred").fmt(:_, :rb, :_)
+  puts Col("SchoolRecord ", "internal", " error occurred").fmt(:_, :rb, :_)
   puts Col(e.message).rb
   puts e.backtrace
 end

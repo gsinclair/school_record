@@ -1,0 +1,118 @@
+# Class lists
+
+Year7:
+  label: '7'
+  full_label: '7MTB2'
+  full_name: '7 Mathematics B2'
+  students:
+   - Bakoulis, Kelly-Maree
+   - Barone, Isabella
+   - Bolt, Madeleine
+   - Chau, Bianca
+   - Chua, Taylor
+   - Clark, Tierney
+   - Magliveras, Irene
+   - Martin-Jones, Eloise
+   - McCarthy, Annelise
+   - Nakhoul, Katrina
+   - Patsalos, Nicoletta
+   - Pirko Ono, Irene
+   - Ryan, Emily
+   - Sewell, Madeline
+   - Zhang, Selina
+
+Year9:
+  label: '9'
+  full_label: '9MT1'
+  full_name: '9 Mathematics 1'
+  students:
+   - Achie, Mikaela
+   - Bayfield, Anna-Louise
+   - Chan, Vanessa
+   - Chen, Karen
+   - Chen, Nicole
+   - Cooper, Ally
+   - Crimmins, Elise
+   - De Silva, Milena
+   - Duncan, Emma
+   - Fei, Betty
+   - Gilfedder, Lucy
+   - Gleeson, Emma
+   - Haldane, Kate
+   - Jiang, Linda
+   - Kench, Charlotte
+   - Kerr, Ella
+   - Kirkby, Anna
+   - Kostic, Rachel
+   - Lowe, Sarah
+   - Marandos, Zoe
+   - McKenzie, Isobel
+   - Rozvany, Annaliese
+   - Wong, Kareena
+   - Xu, Danni
+   - Yates, Emma
+
+Year10:
+  label: '10'
+  full_label: '10MT3'
+  full_name: '10 Mathematics 3'
+  students:
+   - Cai, Angela
+   - Cherry, Alana
+   - Choi, Stephanie
+   - Coorey, Claire
+   - Dabaja, Isabella
+   - Dodd, Georgia
+   - Dunlop, Annika
+   - Edwards, Elise
+   - Ford, Caitlin
+   - Gray, Makere
+   - Hindle, Gabrielle
+   - Katidis, Denise
+   - Kesbah, Tessa
+   - Ko, Pui Wah
+   - Leggat, Isabelle
+   - Lennon, Lauren
+   - Lo, Heibrance
+   - Madden, Alice
+   - McGee-Collett, Charlotte
+   - Metcalf, Sarah
+   - Murphy, Lily
+   - Nelson, Holly
+   - Nelson, Tess
+   - Nichol, Josie
+   - Niles, Rebecca
+   - Ramrakha, Uma
+   - Sioufi, Katrina
+   - Turner, Ellise
+   - Wong, Liz
+   - Yeung, Nicole
+
+Year11:
+  label: '11'
+  full_label: '11MTA'
+  full_name: '11 Advanced Mathematics A'
+  students:
+   - Abi-Hanna, Stephanie
+   - Blake, Jessica
+   - Burke, Anna
+   - Courtney, Clare
+   - Earls, Frances
+   - Galea, Charlotte
+   - Henderson, Isabella
+   - Jones, Tamara
+   - Karras, Natasha
+   - Lawrence, Brittany
+   - Mallis, Madeleine
+   - McHugh, Helen
+   - Moody, Georgia
+   - Parker, Lauren
+   - Pithers, Eliza
+   - Santoso, Cathleen
+   - Smythe, Isabella
+  departures:
+   - "Moody, Georgia: 27 AUG"
+   - "Courtney, Clare: 4 SEP"
+   - "Lawrence, Brittany: 19 MAY"
+  arrivals:
+   - "Earls, Frances: 15 JUN"

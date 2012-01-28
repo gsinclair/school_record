@@ -1,0 +1,28 @@
+---
+'9':
+- !ruby/object:SchoolRecord::DomainObjects::Note
+  date: 2012-01-28
+  student: !ruby/object:SchoolRecord::DomainObjects::Student
+    name: !ruby/object:SchoolRecord::DomainObjects::Name
+      first: Mikaela
+      last: Achie
+    class_label: '9'
+  text: Missing equipment
+
+'11':
+- !ruby/object:SchoolRecord::DomainObjects::Note
+  date: 2012-01-28
+  student: !ruby/object:SchoolRecord::DomainObjects::Student
+    name: !ruby/object:SchoolRecord::DomainObjects::Name
+      first: Isabella
+      last: Henderson
+    class_label: '11'
+  text: Assignment not submitted
+- !ruby/object:SchoolRecord::DomainObjects::Note
+  date: 2012-01-28
+  student: !ruby/object:SchoolRecord::DomainObjects::Student
+    name: !ruby/object:SchoolRecord::DomainObjects::Name
+      first: Anna
+      last: Burke
+    class_label: '11'
+  text: Good work on board

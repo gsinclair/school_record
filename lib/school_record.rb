@@ -1,3 +1,5 @@
+require 'debuglog'
+require 'pry'
 
 module SchoolRecord
   # All contents defined in other files.
@@ -9,3 +11,5 @@ require 'school_record/err'
 require 'school_record/app'
 require 'school_record/command'
 require 'school_record/version'
+require 'school_record/domain_objects'
+require 'school_record/database'

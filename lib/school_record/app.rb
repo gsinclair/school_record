@@ -27,7 +27,8 @@ module SchoolRecord
       if command.nil?
         help
       else
-        class_for_command(command).new.run(args)
+        database = Database.dev
+        class_for_command(command).new(database).run(args)
       end
     end
 

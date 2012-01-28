@@ -86,7 +86,7 @@ assumed that `sr` is set as an alias for `school_record`.
 
 ### Enter data via text editor
 
-    sr -e
+    sr edit
       # Opens an editor in which I can record several classes for today. The
       # program knows what classes I have today and begins with a skeleton like
       # "Day: 2012 Sem2 10B Fri\n\n7: \n\n11: \n\n10: \n", allowing me to fill in
@@ -98,12 +98,12 @@ assumed that `sr` is set as an alias for `school_record`.
       # really simple and concise report after saving the data so the new data can
       # be seen in context.)
 
-    sr -e yesterday     (or sr -e 1)
-    sr -e 2
-    sr -e 3
-    sr -e Mon
-    sr -e Mon,Tue
-    sr -e 9A-Fri
+    sr edit yesterday     (or sr edit 1)
+    sr edit 2
+    sr edit 3
+    sr edit Mon
+    sr edit Mon,Tue
+    sr edit 9A-Fri
       # As above, but enter data for, respectively: yesterday, two days ago, three
       # days ago, the most recent Monday, the most recent Monday AND Tuesday, and
       # Friday of Week 9A.
@@ -111,7 +111,7 @@ assumed that `sr` is set as an alias for `school_record`.
     sr prompt
       # Tell me which lessons are not recorded.
 
-    sr -e prompt
+    sr edit prompt
       # Open an editor containing the skeleton for missing lessons, allowing me
       # to enter them.
       # 'missing' seems like a good alternative to or alias for 'prompt'.
@@ -354,6 +354,10 @@ probably only use the short label, but it makes sense to store the others.  If
 another teacher used this and had two Year 7 classes, for instance, they could
 use the short labels to distinguish them, like 7A and 7B.
 
+A ClassList object represents a class and knows the name of all the students and
+can resolve a name given a fragment.  I guess that resolution might return a
+Student object (class and name).
+
 Obstacle should be a pretty simple class, maybe just a value object with the
 date, the class label, and the reason. Although I didn't think so before, the
 Calendar object should probably just own an array of Obstacles. It can then
@@ -364,6 +368,31 @@ namespace.  Each different type of report will have its own class, like
 SR::Report::Homework.  This class would take the arguments given, check they're
 valid, use the SR::Homework class to get the necessary data, then format a
 report.
+
+Some kind of controller may be necessary. This program has a detailed model,
+with classes to represent domain objects, backed by a rudimentary filesystem
+database. Changes to that model need to be controlled. Perhaps SR::Controller
+can handle that. Or do I need a different controller for each part of the model?
+
+To think that through, consider what the app does when run.
+
+    sr note 7 Jess "Homework incomplete"
+
+* App.new.run(["note", "7", "Jess", "Homework incomplete"])
+* Command::Note.new(["7", "Jess", "Homework incomplete"])
+    * Uses ClassList to resolve the name and produce a 'Student' object
+    * Report error to user if resolution impossible.
+* note = Note.new(student, "Homework incomplete")
+    * This is the model. We create a new note. How does it get persisted?
+* NoteController.instance.save(note, date)
+    * Something like that?
+    * Actually, I think Command::Note functions as the controller.
+* Database.save\_note(note, date)
+    * That's probably better. Or an instance: @database.save\_note(note, date)
+
+
+Also need to think about how to handle all the text resulting from an editing
+session: `sr -e yesterday`.
 
 
 ## Some thoughts on configuration

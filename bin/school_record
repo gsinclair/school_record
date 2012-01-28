@@ -1,5 +1,16 @@
 #! /usr/bin/env ruby
 
 require 'school_record'
+require 'col'
 
-SchoolRecord::App.new.run(ARGV)
+begin
+  SchoolRecord::App.new.run(ARGV)
+rescue SR::SRError => e
+  puts "SchoolRecord error occurred"
+  puts Col(e.message).yb
+  puts e.backtrace
+rescue SR::SRInternalError => e
+  puts Col("SchoolRecord ", "internal", "error occurred").fmt(:_, :rb, :_)
+  puts Col(e.message).rb
+  puts e.backtrace
+end

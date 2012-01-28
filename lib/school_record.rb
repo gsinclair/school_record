@@ -1,6 +1,12 @@
 require 'debuglog'
 require 'pry'
 
+class Object
+  def in?(collection)
+    collection.include? self
+  end
+end
+
 module SchoolRecord
   # All contents defined in other files.
 end

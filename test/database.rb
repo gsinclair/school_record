@@ -30,6 +30,10 @@ D "Database" do
       Eq notes.first.text,             "Assignment not submitted"
       Eq notes.last.student.fullname,  "Anna Burke"
       Eq notes.last.text,              "Good work on board"
+      notes = @db.notes('11', 'ABur')
+      Eq notes.size, 1
+      Eq notes.first.student.fullname,  "Anna Burke"
+      Eq notes.first.text,              "Good work on board"
     end
   end
 end

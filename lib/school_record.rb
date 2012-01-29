@@ -1,20 +1,16 @@
 require 'debuglog'
 require 'pry'
 
-class Object
-  def in?(collection)
-    collection.include? self
-  end
-end
-
 module SchoolRecord
   # All contents defined in other files.
 end
 
 SR = SchoolRecord   # Alias for convenience, used throughout the code.
 
+require 'school_record/util'
 require 'school_record/err'
 require 'school_record/app'
+require 'school_record/report'
 require 'school_record/command'
 require 'school_record/version'
 require 'school_record/domain_objects'

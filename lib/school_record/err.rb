@@ -49,5 +49,11 @@ module SchoolRecord
       msg = "Cannot resolve name fragment #{fragment}: the format is invalid"
       raise SR::SRError, msg
     end
+
+    def invalid_class_label *args
+      label = args.shift
+      msg = "Invalid class label: #{label}"
+      raise SR::SRError, msg
+    end
   end
 end

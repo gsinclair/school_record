@@ -21,15 +21,17 @@ D "Database" do
     D "It can access the saved notes ('notes' method)" do
       notes = @db.notes('9')
       Ko notes, Array
-      Eq notes.size, 1
+      Eq notes.size, 3
       Eq notes.first.student.fullname, "Mikaela Achie"
       Eq notes.first.text,             "Missing equipment"
       notes = @db.notes('11')
-      Eq notes.size, 2
-      Eq notes.first.student.fullname, "Isabella Henderson"
-      Eq notes.first.text,             "Assignment not submitted"
-      Eq notes.last.student.fullname,  "Anna Burke"
-      Eq notes.last.text,              "Good work on board"
+      Eq notes.size, 3
+      Eq notes[0].student.fullname, "Isabella Henderson"
+      Eq notes[0].text,             "Assignment not submitted"
+      Eq notes[1].student.fullname, "Isabella Henderson"
+      Eq notes[1].text,             "Assignment submitted late"
+      Eq notes[2].student.fullname,  "Anna Burke"
+      Eq notes[2].text,              "Good work on board"
       notes = @db.notes('11', 'ABur')
       Eq notes.size, 1
       Eq notes.first.student.fullname,  "Anna Burke"

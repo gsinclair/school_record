@@ -3,7 +3,8 @@ require 'school_record/command'
 module SchoolRecord
 
   class App
-    def initialize
+    def initialize(out=nil)
+      @out ||= STDOUT
     end
 
     COMMANDS = {
@@ -13,14 +14,6 @@ module SchoolRecord
       config: SR::Command::ConfigCmd
     }
 
-    def class_for_command(command)
-      if COMMANDS.key? command.to_sym
-        COMMANDS[command.to_sym]
-      else
-        sr_err :invalid_command, command
-      end
-    end
-
     def run(args)
       puts "school-record version #{SchoolRecord::VERSION}"
       command = args.shift
@@ -29,6 +22,15 @@ module SchoolRecord
       else
         database = Database.dev
         class_for_command(command).new(database).run(args)
+      end
+    end
+
+    private
+    def class_for_command(command)
+      if COMMANDS.key? command.to_sym
+        COMMANDS[command.to_sym]
+      else
+        sr_err :invalid_command, command
       end
     end
 

@@ -8,6 +8,22 @@
       last: Achie
     class_label: '9'
   text: Missing equipment
+- !ruby/object:SchoolRecord::DomainObjects::Note
+  date: 2012-04-20
+  student: !ruby/object:SchoolRecord::DomainObjects::Student
+    name: !ruby/object:SchoolRecord::DomainObjects::Name
+      first: Anna
+      last: Kirkby
+    class_label: '9'
+  text: Talking too much
+- !ruby/object:SchoolRecord::DomainObjects::Note
+  date: 2012-05-13
+  student: !ruby/object:SchoolRecord::DomainObjects::Student
+    name: !ruby/object:SchoolRecord::DomainObjects::Name
+      first: Angela
+      last: Kirkby
+    class_label: '9'
+  text: Late to class
 
 '11':
 - !ruby/object:SchoolRecord::DomainObjects::Note
@@ -18,6 +34,14 @@
       last: Henderson
     class_label: '11'
   text: Assignment not submitted
+- !ruby/object:SchoolRecord::DomainObjects::Note
+  date: 2012-02-03
+  student: !ruby/object:SchoolRecord::DomainObjects::Student
+    name: !ruby/object:SchoolRecord::DomainObjects::Name
+      first: Isabella
+      last: Henderson
+    class_label: '11'
+  text: Assignment submitted late
 - !ruby/object:SchoolRecord::DomainObjects::Note
   date: 2012-01-28
   student: !ruby/object:SchoolRecord::DomainObjects::Student

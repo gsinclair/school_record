@@ -16,6 +16,16 @@ module SchoolRecord
         @fullname ||= "#{@first} #{@last}"
       end
       def to_s() fullname end
+      def hash
+        [self.class, @first, @last].hash
+      end
+      def eql?(other)
+        self.equal?(other) ||
+          self.class == other.class &&
+          self.first == other.first &&
+          self.last  == other.last
+      end
+      alias == eql?
     end
 
     # A Student has a name and a class label.
@@ -33,6 +43,16 @@ module SchoolRecord
       def to_s
         "#{first} #{last} (#{class_label})"
       end
+      def hash
+        [self.class, @name, @class_label].hash
+      end
+      def eql?(other)
+        self.equal?(other) ||
+          self.class.equal?(other.class) &&
+          self.name == other.name        &&
+          self.class_label == other.class_label
+      end
+      alias == eql?
     end  # class Student
 
     # A Note has a date, a Student, and some text.

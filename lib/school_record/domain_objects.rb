@@ -28,6 +28,8 @@ module SchoolRecord
       alias == eql?
     end
 
+    # --------------------------------------------------------------------------- #
+
     # A Student has a name and a class label.
     #   adam = Name.new('Adam', 'Yallop')
     #   std = Student.new(adam, '10C')
@@ -55,6 +57,8 @@ module SchoolRecord
       alias == eql?
     end  # class Student
 
+    # --------------------------------------------------------------------------- #
+
     # A Note has a date, a Student, and some text.
     #   adam = Name.new('Adam', 'Yallop')
     #   adam = Student.new(adam, '10C')
@@ -65,6 +69,8 @@ module SchoolRecord
       end
       attr_reader :date, :student, :text
     end  # class Note
+
+    # --------------------------------------------------------------------------- #
 
     # A SchoolClass has a label ('7', '10C', etc.), a full name ('7 Mathematics B2'),
     # and a list of student names (array of Name objects). The key purpose of
@@ -135,6 +141,68 @@ module SchoolRecord
         end
       end
     end  # class SchoolClass
+
+    # --------------------------------------------------------------------------- #
+
+    # SchoolDay represents a date in the school calendar. It encompasses
+    # regular-style date (2012-07-29) and semester-style date (Sem1 Fri 11A).
+    # It is a dumb object, believing whatever you tell it.  The Calendar class
+    # is responsibile for knowing the term times and determining what date
+    # corresponds to what week, etc.  This class just conveys values.
+    class SchoolDay
+      def initialize(date, term, week)
+        @date, @term, @week = date, term, week
+      end
+
+      # -> Date
+      def date() @date end
+
+      # -> 1 or 2
+      def semester() (@date.month <= 6) ? 1 : 2 end
+
+      # -> 1..4
+      def term() @term end
+
+      # -> 1..20  (more like 1..18 or 1..19)
+      def week() @week end
+
+      # -> "Mon 11A"
+      def weekstr() "#{week}#{a_or_b}" end
+
+      # -> "Mon", "Tue", ...
+      def day() @date.strftime("%a") end
+
+      # -> "Jan", "Feb", ...
+      def month() @date.strftime("%b") end
+
+      # -> 2012, ...
+      def year() @date.year end
+
+      # -> "A", "B"
+      def a_or_b() @week.odd?  ? 'A' : 'B' end
+
+      # -> "Mon 11A (28 Sep)"
+      def to_s() "#{day} #{weekstr} (#{date.day} #{month})" end
+
+      # -> 1..10
+      def day_of_cycle
+        n = @date.wday    # 1..5 (for Mon..Fri)
+        n += 5 if a_or_b == 'B'
+        trace :n, binding
+        n
+      end
+
+      # sem_date()           # -> "Mon 11A"
+      # sem_date(true)       # -> "Sem2 Mon 11A"
+      # sem_date(:semester)  # -> "Sem2 Mon 11A"
+      def sem_date(include_semester=false)
+        str = "#{day} #{weekstr}"
+        if include_semester == true or include_semester == :semester
+          str = "Sem#{semester} " + str
+        end
+        str
+      end
+    end  # class SchoolDay
 
   end  # module DomainObjects
 

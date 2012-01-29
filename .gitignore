@@ -5,3 +5,4 @@ pkg/*
 debug.log
 tags
 etc/dev-db/notes.yaml
+commit_message.txt

@@ -59,7 +59,6 @@ class SR::Report::Notes < SR::Report
 
   def emit_student_notes(student, notes)
     emit student, :yb
-    trace "notes.map { |n| n.date.to_s }", binding if student.name.first == "Isabella"
     notes.sort_by { |n| n.date }.each do |n|
       emit "  #{SR::Util.day_month(n.date)}  #{n.text}"
     end

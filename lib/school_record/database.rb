@@ -87,11 +87,22 @@ module SchoolRecord
     def valid_class_label?(label)
       @classes.key? label
     end
+    def valid_class_labels
+      @classes.keys.dup
+    end
     def resolve_student(class_label, name_fragment)
       @classes[class_label].resolve(name_fragment)
     end
     def resolve_student!(class_label, name_fragment)
       @classes[class_label].resolve!(name_fragment)
+    end
+
+    # Timetable.
+
+    def timetable
+      path = @files.timetable_file
+      labels = valid_class_labels
+      @timetable ||= SR::Timetable.from_yaml(path, labels)
     end
 
   end  # class Database
@@ -114,6 +125,9 @@ module SchoolRecord
     end
     def class_lists_file
       @clf ||= @directory + "Config/class-lists.yaml"
+    end
+    def timetable_file
+      @tt ||= @directory + "Config/timetable.yaml"
     end
   end  # class Database::Files
 

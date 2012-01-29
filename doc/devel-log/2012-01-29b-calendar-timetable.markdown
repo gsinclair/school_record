@@ -159,3 +159,92 @@ I've created a new layout for the test database.
 I need to update the code to take account of fact that class-lists.yaml is now
 in Config.
 
+## Iteration 2: Timetable (and SchoolDay)
+
+I'll start with Timetable: nice and easy.  Here's the config I planted.  It is
+my 2012 timetable.
+
+    WeekA:
+      Mon: "10,11,7,12"
+      Tue: "10,12,11,7"
+      Wed: "11,12,7,10"
+      Thu: "10,10,7,12"
+      Fri: "11,11,10,7"
+    WeekB:
+      Mon: "10,7,12,11"
+      Tue: "10,12,12,7"
+      Wed: "12,11,10,7"
+      Thu: "10,10,7,11"
+      Fri: "10,7,12,11"
+
+So a Timetable has a Week A and Week B.  Do I need a Week class?  Basically, the
+interactions I need with Timetable are:
+
+* timetable.lessons(schoolday) -> ['10', '12', '12', '7']
+
+That's it, actually.  Timetable shouldn't do anything smart.  It's up to another
+class, like Lessons, to look out for holidays etc.
+
+    class Timetable
+      @days -- array of 10 strings (the timetable cycle has 10 days)
+      Timetable.from_yaml(file)
+      lessons(schoolday)
+
+That means I need to implement the SchoolDay class.  It represents both forms of
+date.  The parsing is left to Calendar, as in @calendar.schoolday(string)
+
+    class SchoolDay
+      date       # -> Date
+      semester   # -> 1 or 2
+      term       # -> 1..4
+      week       # -> 1..20  (more like 1..18 or 1..19)
+      day        # -> "Mon", "Tue", ...
+      month      # -> "Jan", "Feb", ...
+      year       # -> 2012, ...
+      day_of_cycle  # -> 1..10
+      a_or_b     # -> "A", "B"
+      to_s       # -> "Mon 11A (2012-09-28)"
+      sem_date   # -> "Mon 11A" or "Sem2 Mon 11A" (if :semester => true)
+
+SchoolDay needs access to a Calendar to do its work.  It always assumes the
+current year (e.g. 2012).  I guess I need to call SchoolDay.calendar=() before
+doing anything.
+
+* No! SchoolDay is a dumb object and believes whatever you tell it.  Here is how
+  it works:
+
+    sd = SchoolDay.new( Date.new(2012,2,21), 1, 4)   # term 1, week 4
+    sd.day            # Tue
+    sd.semester       # 1     (before June)
+    sd.weekstr        # "4B"
+    sd.to_s           # "Tue 4B (21 Feb)"
+    sd.day_of_cycle   # 6     (calculated from day and fact that it's Week B)
+    # etc.
+
+So _that_ means I need Calendar!  I was trying to start with an easy class.  I
+guess I can implement Timetable and test it using some artificially created
+SchoolDay objects.  It will be a simple class anyway.
+
+For the record:
+
+    class Calendar
+      schoolday(string)   "6 Jun" or "2012-06-01" or "11A-Mon" or
+                          "11A Mon" or "Sem2-11A-Mon" or "Sem2 11A Mon"
+
+(_Later_...) OK, I've implemented and tested Timetable _and_ SchoolDay.
+Timetable works as mentioned above.  Here's a snippet from its test.
+
+
+    db = SR::Database.test
+    timetable = db.timetable
+    date = Date.new(2012, 2, 13)   # Mon 13 Feb 2012
+    sd01 = SR::DO::SchoolDay.new(date + 0,  1, 3)
+    Eq timetable.lessons(sd01), ['10','11','7','12']
+
+So Timetable and SchoolDay, two dumb classes, are complete.  I can work on
+Calendar now.
+
+Note: Timetable is SR::Timetable and SchoolDay is SR::DO::SchoolDay.  Maybe that
+DomainObjects namespace won't last forever, but the distinguishing feature
+between Timetable and SchoolDay is that Timetable comes from a configuration
+file and needs to be loaded by the database.

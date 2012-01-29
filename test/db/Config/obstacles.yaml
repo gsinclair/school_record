@@ -1,0 +1,20 @@
+
+Term1:
+  - date: 3A-Thu
+    class: 11
+    reason: Careers seminar
+Term2:
+  - date: 12B-Wed
+    class: 7
+    reason: Geography excursion
+  - dates: ["9A-Mon", "9A-Thu"]
+    class: 7
+    reason: Exams
+Term3:
+  - dates: ["2B-Wed", "3A-Fri"]
+    class: 10
+    reason: Exams
+Term4:
+  - date: 16B-Thu
+    class: 10
+    reason: Self-defence

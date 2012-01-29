@@ -113,7 +113,7 @@ module SchoolRecord
       @nf ||= @directory + "notes.yaml"
     end
     def class_lists_file
-      @clf ||= @directory + "class-lists.yaml"
+      @clf ||= @directory + "Config/class-lists.yaml"
     end
   end  # class Database::Files
 

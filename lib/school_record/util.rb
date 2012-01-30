@@ -12,5 +12,23 @@ module SchoolRecord
     def Util.day_month(date)
       date.strftime("%e %b")
     end
+
+    def Util.weekday?(date)
+      @weekdays ||= (1..5)
+      date.wday.in? @weekdays
+    end
+
+    def Util.weekend?(date)
+      @weekends ||= [0,6]
+      date.wday.in? @weekends
+    end
+
+    def Util.date(arg)
+      case arg
+      when String then Date.parse(arg)
+      when Date   then arg
+      else sr_int "Invalid argument: #{arg.inspect}"
+      end
+    end
   end
 end

@@ -105,6 +105,12 @@ module SchoolRecord
       @timetable ||= SR::Timetable.from_yaml(path, labels)
     end
 
+    # Calendar.
+
+    def calendar
+      @calendar ||= SR::Calendar.new( @files.calendar_file )
+    end
+
   end  # class Database
 
   class Database::Dirs
@@ -127,7 +133,10 @@ module SchoolRecord
       @clf ||= @directory + "Config/class-lists.yaml"
     end
     def timetable_file
-      @tt ||= @directory + "Config/timetable.yaml"
+      @tf ||= @directory + "Config/timetable.yaml"
+    end
+    def calendar_file
+      @cf ||= @directory + "Config/calendar.yaml"
     end
   end  # class Database::Files
 

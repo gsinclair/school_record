@@ -248,3 +248,75 @@ Note: Timetable is SR::Timetable and SchoolDay is SR::DO::SchoolDay.  Maybe that
 DomainObjects namespace won't last forever, but the distinguishing feature
 between Timetable and SchoolDay is that Timetable comes from a configuration
 file and needs to be loaded by the database.
+
+## Iteration 2: Calendar
+
+Configuration (Config/calendar.yaml) as it is in the test database as of today.
+Some details may be wrong but it's close to correct for 2012.
+
+    Term1:
+      - "2012-01-30"
+      - "10 weeks"
+      - "2012-04-05"
+    Term2:
+      - "2012-04-26"
+      - "9 weeks"
+      - "2012-06-22"
+    Term 3:
+      - "2012-07-17"
+      - "10 weeks"
+      - "2012-09-17"
+    Term 4:
+      - "2012-10-08"
+      - "9 weeks"
+      - "2012-12-07"
+    StaffDays:
+      - "2012-01-30"
+      - "2012-01-31"
+      - "2012-06-08"
+      - "2012-12-06"
+      - "2012-12-07"
+    PublicHolidays:
+      - "2012-04-06"
+      - "2012-04-09"
+      - "2012-04-25"
+      - "2012-06-11"
+    SpeechDay: "2012-12-05"
+
+From this, I can see that Calendar will need a Term class to look after the
+terms.  A Term class will have:
+
+* term number (1..4)
+* starting week (1 or 11, mostly)
+* start and end dates
+* number of weeks (probably not needed, but I'll chuck it in)
+
+A Term object is responsible for resolving dates...
+
+Actually, I'm not sure how it will be implemented.  Test-driven design will
+probably help here.
+
+The one thing I know about Calendar is that it implements Calendar#schoolday(str).
+By setting up some tests for that, I can work on the implementation. Hopefully
+once that works, ideas for other methods, in this class or others, will sprout.
+
+_Later..._
+
+In working on the implementation of Calendar#schoolday(str), I decided a Term
+class was necessary.  It looks like this:
+
+    @term = Term.new(2, '2012-04-23', '2012-06-22')
+    @term.number                      # -> 2
+    @term.semester                    # -> 1
+    @term.number_of_weeks             # -> 9
+    @term.include? '2012-05-01'       # => true
+    @term.include? '2012-05-05'       # => false (it's a weekend)
+    @term.date(week: 5, day: 2)       # -> Date.new(2012, 5, 22)
+    @term.week_and_day '2012-06-13'   # -> [8, 3]  (Week 8, Wednesday)
+
+Good stuff.  I'm committing the code (and this doc) up to this point and will
+work on Calendar tomorrow.  I've started implementing Calendar, and it should be
+much easier now with a decent Term class.  I need to model semesters somehow.
+That will probably be with a Semester class that defers most of its work to
+Term.  (Semester just needs to map, say, Week 13 to Term 2 Week 4.)  Anyway,
+that's for tomorrow.

@@ -77,6 +77,76 @@ D "Calendar::Term" do
     end
   end
 
+  D "Some tests on a pathological term" do
+    # This term runs from Wed 5 Sep to Tue 25 Sep.
+    @term = SR::Calendar::Term.new(3, d('2012-09-05'), d('2012-09-25'))
+    Eq @term.number, 3
+    Eq @term.number_of_weeks, 4
+    F  @term.include? '2012-09-03'   # This is Monday of week 1 but it's excluded
+    F  @term.include? '2012-09-04'   # Likewise Tuesday
+    T  @term.include? '2012-09-05'   # First day of term
+    T  @term.include? '2012-09-24'
+    T  @term.include? '2012-09-25'   # Last day of term
+    F  @term.include? '2012-09-26'   # Day after last day
+    Eq @term.semester, 2
+    Eq @term.date(week: 1, day: 1), nil   # Doesn't fall for Monday of first week
+    Eq @term.date(week: 1, day: 2), nil   # Likewise Tuesday
+    Eq @term.date(week: 1, day: 3), d('2012-09-05')
+    Eq @term.date(week: 1, day: 4), d('2012-09-06')
+    Eq @term.date(week: 3, day: 2), d('2012-09-18')
+    Eq @term.date(week: 4, day: 2), d('2012-09-25')  # Last day
+    Eq @term.date(week: 4, day: 3), nil
+    Eq @term.week_and_day('2012-09-03'), nil
+    Eq @term.week_and_day('2012-09-04'), nil
+    Eq @term.week_and_day('2012-09-05'), [1,3]
+    Eq @term.week_and_day('2012-09-06'), [1,4]
+    Eq @term.week_and_day('2012-09-18'), [3,2]
+    Eq @term.week_and_day('2012-09-25'), [4,2]
+    Eq @term.week_and_day('2012-09-26'), nil
+  end
+
+  D "Error on stupid input" do
+    D "Term outside 1..4" do
+      E(SR::SRError) { SR::Calendar::Term.new(5, Date.today, Date.today) }
+    end
+    D "Start date after finish date" do
+      E(SR::SRError) { SR::Calendar::Term.new(3, Date.today, Date.today - 25) }
+    end
+  end
+
+end  # Calendar::Term
+
+D "Calendar::Semester" do
+  D.<< {
+    t3 = SR::Calendar::Term.new(3, d('2012-07-16'), d('2012-09-20'))
+    t4 = SR::Calendar::Term.new(4, d('2012-10-09'), d('2012-12-07'))
+    @sem = SR::Calendar::Semester.new(2, [t3, t4])
+  }
+  D "#number" do
+    Eq @sem.number, 2
+  end
+  D "#include?" do
+    F @sem.include? '2012-07-15'  # Monday of week 1 is not included.
+    T @sem.include? '2012-07-16'  # First day of term/semester.
+    T @sem.include? '2012-08-03'
+    F @sem.include? '2012-08-05'  # Weekend.
+    F @sem.include? '2012-09-21'  # Last day is Thu; this is Fri.
+    F @sem.include? '2012-09-26'  # This is in the holidays between the terms.
+    T @sem.include? '2012-10-09'  # First day Term 4.
+    T @sem.include? '2012-11-13'
+    T @sem.include? '2012-12-07'  # Last day.
+    F @sem.include? '2012-12-10'
+  end
+  D "#number_of_weeks" do
+    Eq @sem.number_of_weeks, 19
+  end
+  D "#date(week: 7, day: 2) etc." do
+    D "Handles the irregular start and end of term" do
+      Eq @sem.date(week: 10, day: 5), nil
+    end
+  end
+  D "#week_and_day" do
+  end
 end
 
 xD "Calendar#schoolday" do

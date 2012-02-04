@@ -196,47 +196,89 @@ D "Calendar::Semester" do
   end
 end  # Calendar::Semester
 
-xD "Calendar#schoolday" do
-  D.<< {
-    @cal = SR::Database.test.calendar
-    @cal.today = Date.new(2012, 3, 7)  # Sem1 Wed 7A (7 Mar)
-  }
-  D.>> {
-    @cal.reset_today
-  }
-  D "2012-02-16" do
-    Eq @cal.schoolday("2012-02-16").sem_date(true), "Sem1 Thu 3A"
+D "Calendar" do
+  D "Setting and resetting the value of 'today'" do
+    cal = SR::Database.test.calendar
+    Eq cal.today, Date.today
+    cal.today = Date.new(1929, 1, 1)
+    Eq cal.today, Date.new(1929, 1, 1)
+    cal.today = Date.new(1930, 1, 1)
+    Eq cal.today, Date.new(1930, 1, 1)
+    cal.reset_today
+    Eq cal.today, Date.new(1929, 1, 1)
+    cal.reset_today
+    Eq cal.today, Date.today
+    cal.reset_today
+    Eq cal.today, Date.today
+    cal.reset_today
+    Eq cal.today, Date.today
   end
-  D "today" do
-    Eq @cal.schoolday("today").sem_date(true), "Sem1 Wed 7A"
-    Eq @cal.schoolday("today").date, Date.new(2012, 3, 7)
-  end
-  D "yesterday" do
-    Eq @cal.schoolday("yesterday").sem_date(true), "Sem1 Tue 7A"
-    Eq @cal.schoolday("yesterday").date, Date.new(2012, 3, 6)
-  end
-  D "12B Thu (and Thu 12B)" do
-    Eq @cal.schoolday("12B Thu").sem_date(true), "Sem1 Thu 12B"
-    Eq @cal.schoolday("12B Thu").date, Date.new(2012, 5, 3)
-    Eq @cal.schoolday("Thu 12B").sem_date(true), "Sem1 Thu 12B"
-    Eq @cal.schoolday("Thu 12B").date, Date.new(2012, 5, 3)
-  end
-  D "Thu 12B Sem2 and permutations" do
-    Eq @cal.schoolday("Sem2 12B Thu").date, Date.new(2012, 10, 18)
-    Eq @cal.schoolday("Sem2 Thu 12B").date, Date.new(2012, 10, 18)
-    Eq @cal.schoolday("12B Thu Sem2").date, Date.new(2012, 10, 18)
-    Eq @cal.schoolday("12B Sem2 Thu").date, Date.new(2012, 10, 18)
-    Eq @cal.schoolday("Thu 12B Sem2").date, Date.new(2012, 10, 18)
-    Eq @cal.schoolday("Thu Sem2 12B").date, Date.new(2012, 10, 18)
-  end
-  D "Error for incomplete or invalid input" do
-    E(SR::SRError) { @cal.schoolday("12B") }
-    E(SR::SRError) { @cal.schoolday("Sem1") }
-    E(SR::SRError) { @cal.schoolday("xyz") }
-  end
-  D "nil for days that are not school days" do
-    N @cal.schoolday("Sunday")
-    N @cal.schoolday("2012-01-23")  # In the long holidays
-    # Also test dates like staff days, public holidays, speech day
-  end
-end
+  D "#schoolday" do
+    D "Test in Semester 1 2012" do
+      D.<< {
+        @cal = SR::Database.test.calendar
+        @cal.today = Date.new(2012, 3, 7)  # Sem1 Wed 6B (7 Mar)
+      }
+      D.>> {
+        @cal.reset_today
+      }
+      D "today" do
+        N! @cal.schoolday("today")
+        Eq @cal.schoolday("today").sem_date(true), "Sem1 Wed 6B"
+        Eq @cal.schoolday("today").date, Date.new(2012, 3, 7)
+      end
+      D "2012-02-16" do
+        Eq @cal.schoolday("2012-02-16").sem_date(true), "Sem1 Thu 3A"
+        Eq @cal.schoolday("2012-02-16").date, Date.new(2012, 2, 16)
+      end
+      D "yesterday" do
+        Eq @cal.schoolday("yesterday").sem_date(true), "Sem1 Tue 6B"
+        Eq @cal.schoolday("yesterday").date, Date.new(2012, 3, 6)
+      end
+      D "Monday" do
+        Eq @cal.schoolday("Monday").sem_date(true), "Sem1 Mon 6B"
+        Eq @cal.schoolday("Monday").date, Date.new(2012, 3, 5)
+      end
+      D "Fri" do
+        Eq @cal.schoolday("Fri").sem_date(true), "Sem1 Fri 5A"
+        Eq @cal.schoolday("Fri").date, Date.new(2012, 3, 2)
+      end
+      D "12B Thu (and Thu 12B)" do
+        Eq @cal.schoolday("12B Thu").sem_date(true), "Sem1 Thu 12B"
+        Eq @cal.schoolday("12B Thu").date, Date.new(2012, 5, 3)
+        Eq @cal.schoolday("Thu 12B").sem_date(true), "Sem1 Thu 12B"
+        Eq @cal.schoolday("Thu 12B").date, Date.new(2012, 5, 3)
+      end
+      D "Thu 12B Sem2 and permutations" do
+        Eq @cal.schoolday("Sem2 12B Thu").date, Date.new(2012, 10, 18)
+        Eq @cal.schoolday("Sem2 Thu 12B").date, Date.new(2012, 10, 18)
+        Eq @cal.schoolday("12B Thu Sem2").date, Date.new(2012, 10, 18)
+        Eq @cal.schoolday("12B Sem2 Thu").date, Date.new(2012, 10, 18)
+        Eq @cal.schoolday("Thu 12B Sem2").date, Date.new(2012, 10, 18)
+        Eq @cal.schoolday("Thu Sem2 12B").date, Date.new(2012, 10, 18)
+      end
+      D "Error for incomplete or invalid input" do
+        E(SR::SRError) { @cal.schoolday("12B") }
+        E(SR::SRError) { @cal.schoolday("Sem1") }
+        E(SR::SRError) { @cal.schoolday("xyz") }
+        D "Error for a date that is not this year" do
+          E(SR::SRError) { @cal.schoolday("1994-04-29") }
+        end
+      end
+      D "nil for days that are not school days" do
+        N @cal.schoolday("Sunday")
+        N @cal.schoolday("2012-01-23")  # In the long holidays
+        # Also test dates like staff days, public holidays, speech day
+      end
+    end  # Test in Semester 1 2012
+    D "Brief test in Semester 2 2012" do
+      D.<< {
+        @cal = SR::Database.test.calendar
+        @cal.today = Date.new(2012, 3, 7)  # Sem1 Wed 7A (7 Mar)
+      }
+      D.>> {
+        @cal.reset_today
+      }
+    end
+  end  # #schoolday
+end  # Calendar

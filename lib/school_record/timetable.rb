@@ -18,11 +18,9 @@ module SchoolRecord
     def Timetable.from_yaml(path, valid_class_labels)
       hash = YAML.load(path.read)
       weekA = hash["WeekA"]
-      trace :weekA, binding
       days = %w(Mon Tue Wed Thu Fri).map { |day| weekA[day] }
       weekB = hash["WeekB"]
       days += %w(Mon Tue Wed Thu Fri).map { |day| weekB[day] }
-      trace :days, binding
       unless Array === days and days.size == 10 and days.first.is_a? String
         sr_int "Timetable.from_hash: invalid timetable config file #{path.to_s}"
       end

@@ -1,10 +1,10 @@
 
 D "SchoolDay" do
-  D "test 1" do
+  D "2012-02-21, Semester 1, Week 4" do
     sd = SR::DO::SchoolDay.new(Date.new(2012,2,21), 1, 4)
     Eq sd.date, Date.new(2012, 2, 21)
     Eq sd.semester, 1
-    Eq sd.term,     1
+    #Eq sd.term,     1
     Eq sd.week,     4
     Eq sd.weekstr, '4B'
     Eq sd.day,     'Tue'
@@ -18,11 +18,11 @@ D "SchoolDay" do
     Eq sd.sem_date(true),      'Sem1 Tue 4B'
   end
 
-  D "test 2" do
-    sd = SR::DO::SchoolDay.new(Date.new(2012,11,9), 4, 15)
+  D "2012-11-00, Semester 2, Week 15" do
+    sd = SR::DO::SchoolDay.new(Date.new(2012,11,9), 2, 15)
     Eq sd.date, Date.new(2012, 11, 9)
     Eq sd.semester, 2
-    Eq sd.term,     4
+    #Eq sd.term,     4
     Eq sd.week,     15
     Eq sd.weekstr, '15A'
     Eq sd.day,     'Fri'
@@ -34,5 +34,10 @@ D "SchoolDay" do
     Eq sd.sem_date, 'Fri 15A'
     Eq sd.sem_date(:semester), 'Sem2 Fri 15A'
     Eq sd.sem_date(true),      'Sem2 Fri 15A'
+  end
+
+  D "Error when given bad input" do
+    E(SR::SRError) { SR::DO::SchoolDay.new(Date.new(2012,11,9), 3, 14)}
+    E(SR::SRError) { SR::DO::SchoolDay.new(Date.new(2012,11,9), 1, 50)}
   end
 end

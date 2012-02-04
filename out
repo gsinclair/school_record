@@ -1,0 +1,90 @@
+
+[1m[36m +----- Report ---------------------------------------------------------------+[0m[0m
+ [1m[36m|[0m[0m                                                                            [1m[36m|[0m[0m
+ [1m[36m|[0m[0m[1m[33m  Calendar::Term                                                   [0m[0m[1m[32m  -[0m[0m      [1m[36m|[0m[0m
+ [1m[36m|[0m[0m    #number                                                        [1m[32m  PASS[0m[0m   [1m[36m|[0m[0m
+ [1m[36m|[0m[0m    #semester                                                      [1m[32m  PASS[0m[0m   [1m[36m|[0m[0m
+ [1m[36m|[0m[0m    #include?                                                      [1m[32m  PASS[0m[0m   [1m[36m|[0m[0m
+ [1m[36m|[0m[0m      Returns false on weekends                                    [1m[32m  PASS[0m[0m   [1m[36m|[0m[0m
+ [1m[36m|[0m[0m    #number_of_weeks                                               [1m[32m  PASS[0m[0m   [1m[36m|[0m[0m
+ [1m[36m|[0m[0m    #date(week: 7, day: 2) etc.                                    [1m[32m  PASS[0m[0m   [1m[36m|[0m[0m
+ [1m[36m|[0m[0m      Raises error on invalid input                                [1m[32m  PASS[0m[0m   [1m[36m|[0m[0m
+ [1m[36m|[0m[0m      Returns nil if week is not in term                           [1m[32m  PASS[0m[0m   [1m[36m|[0m[0m
+ [1m[36m|[0m[0m    #week_and_day                                                  [1m[32m  PASS[0m[0m   [1m[36m|[0m[0m
+ [1m[36m|[0m[0m      Returns nil if argument is not in term                       [1m[32m  PASS[0m[0m   [1m[36m|[0m[0m
+ [1m[36m|[0m[0m    Some tests on a pathological term                              [1m[32m  PASS[0m[0m   [1m[36m|[0m[0m
+ [1m[36m|[0m[0m    Error on stupid input                                          [1m[32m  -[0m[0m      [1m[36m|[0m[0m
+ [1m[36m|[0m[0m      Term outside 1..4                                            [1m[32m  PASS[0m[0m   [1m[36m|[0m[0m
+ [1m[36m|[0m[0m      Start date after finish date                                 [1m[32m  PASS[0m[0m   [1m[36m|[0m[0m
+ [1m[36m|[0m[0m                                                                            [1m[36m|[0m[0m
+ [1m[36m|[0m[0m[1m[33m  Calendar::Semester                                               [0m[0m[1m[32m  -[0m[0m      [1m[36m|[0m[0m
+ [1m[36m|[0m[0m    #number                                                        [1m[32m  PASS[0m[0m   [1m[36m|[0m[0m
+ [1m[36m|[0m[0m    #include?                                                      [1m[32m  PASS[0m[0m   [1m[36m|[0m[0m
+ [1m[36m|[0m[0m    #number_of_weeks                                               [1m[32m  PASS[0m[0m   [1m[36m|[0m[0m
+ [1m[36m|[0m[0m    #date(week: 7, day: 2) etc.                                    [1m[32m  PASS[0m[0m   [1m[36m|[0m[0m
+ [1m[36m|[0m[0m      Handles the irregular start and end of term                  [1m[32m  PASS[0m[0m   [1m[36m|[0m[0m
+ [1m[36m|[0m[0m    #week_and_day                                                  [1m[32m  PASS[0m[0m   [1m[36m|[0m[0m
+ [1m[36m|[0m[0m      Returns nil if date is not in semester                       [1m[32m  PASS[0m[0m   [1m[36m|[0m[0m
+ [1m[36m|[0m[0m                                                                            [1m[36m|[0m[0m
+ [1m[36m|[0m[0m[1m[33m  Calendar                                                         [0m[0m[1m[32m  -[0m[0m      [1m[36m|[0m[0m
+ [1m[36m|[0m[0m    Setting and resetting the value of 'today'                     [1m[32m  PASS[0m[0m   [1m[36m|[0m[0m
+ [1m[36m|[0m[0m    #schoolday                                                     [1m[32m  -[0m[0m      [1m[36m|[0m[0m
+ [1m[36m|[0m[0m      Test in Semester 1 2012                                      [1m[32m  -[0m[0m      [1m[36m|[0m[0m
+ [1m[36m|[0m[0m        today                                                      [1m[32m  PASS[0m[0m   [1m[36m|[0m[0m
+ [1m[36m|[0m[0m        2012-02-16                                                 [1m[32m  PASS[0m[0m   [1m[36m|[0m[0m
+ [1m[36m|[0m[0m        yesterday                                                  [1m[32m  PASS[0m[0m   [1m[36m|[0m[0m
+ [1m[36m|[0m[0m        Monday                                                     [1m[32m  PASS[0m[0m   [1m[36m|[0m[0m
+ [1m[36m|[0m[0m        Fri                                                        [1m[32m  PASS[0m[0m   [1m[36m|[0m[0m
+ [1m[36m|[0m[0m[1m[31m        12B Thu (and Thu 12B)                                      [0m[0m[1m[31m  FAIL[0m[0m   [1m[36m|[0m[0m
+ [1m[36m|[0m[0m[1m[31m        Thu 12B Sem2 and permutations                              [0m[0m[1m[31m  FAIL[0m[0m   [1m[36m|[0m[0m
+ [1m[36m|[0m[0m[1m[35m        Error for incomplete or invalid input                      [0m[0m[1m[35m  ERROR[0m[0m  [1m[36m|[0m[0m
+ [1m[36m|[0m[0m        nil for days that are not school days                      [1m[32m  PASS[0m[0m   [1m[36m|[0m[0m
+ [1m[36m|[0m[0m      Brief test in Semester 2 2012                                [1m[32m  -[0m[0m      [1m[36m|[0m[0m
+ [1m[36m|[0m[0m                                                                            [1m[36m|[0m[0m
+[1m[36m +----------------------------------------------------------------------------+[0m[0m
+
+
+[1m[31mFAIL: 12B Thu (and Thu 12B)[0m[0m
+    [33mtest/calendar.rb[0m
+       245       end
+       246       D "12B Thu (and Thu 12B)" do
+    [1m[33m=> 247         Eq @cal.schoolday("12B Thu").sem_date(true), "Sem1 T...[0m[0m
+       248         Eq @cal.schoolday("12B Thu").date, Date.new(2012, 5,...
+       249         Eq @cal.schoolday("Thu 12B").sem_date(true), "Sem1 T...
+  [1m[33mEquality test failed[0m[0m[1m[31m
+          Was: [0m[0m[1m[31m"Sem1 Thu 5A"[0m[0m[1m[33m
+    Should be: [0m[0m[1m[32m"Sem1 Thu 12B"[0m[0m
+  Backtrace
+    test/calendar.rb:247:in `block (4 levels) in <top (required)>'
+
+[1m[31mFAIL: Thu 12B Sem2 and permutations[0m[0m
+    [33mtest/calendar.rb[0m
+       251       end
+       252       D "Thu 12B Sem2 and permutations" do
+    [1m[33m=> 253         Eq @cal.schoolday("Sem2 12B Thu").date, Date.new(201...[0m[0m
+       254         Eq @cal.schoolday("Sem2 Thu 12B").date, Date.new(201...
+       255         Eq @cal.schoolday("12B Thu Sem2").date, Date.new(201...
+  [1m[33mEquality test failed[0m[0m[1m[31m
+          Was: [0m[0m[1m[31m#<Date: 2012-03-01 ((2455988j,0s,0n),+0s,2299161j)>[0m[0m[1m[33m
+    Should be: [0m[0m[1m[32m#<Date: 2012-10-18 ((2456219j,0s,0n),+0s,2299161j)>[0m[0m
+  Backtrace
+    test/calendar.rb:253:in `block (4 levels) in <top (required)>'
+
+[1m[35mERROR: Error for incomplete or invalid input[0m[0m
+    [33mtest/calendar.rb[0m
+       259       end
+       260       D "Error for incomplete or invalid input" do
+    [1m[33m=> 261         E(SR::SRError) { @cal.schoolday("12B") }[0m[0m
+       262         E(SR::SRError) { @cal.schoolday("Sem1") }
+       263         E(SR::SRError) { @cal.schoolday("xyz") }
+[1m[35m  Class:   [0m[0m[1m[33mNoMethodError[0m[0m
+[1m[35m  Message: [0m[0m[1m[33mundefined method `semester' for #<SchoolRecord::Calendar:0x00000100843d60>[0m[0m
+  Backtrace
+    ./lib/school_record/calendar.rb:306:in `parse'
+    ./lib/school_record/calendar.rb:189:in `schoolday'
+    test/calendar.rb:261:in `block (5 levels) in <top (required)>'
+    test/calendar.rb:261:in `block (4 levels) in <top (required)>'
+
+[1m[31m================================================================================[0m[0m
+ [1m[31mFAIL     [0m[0m[1m[32m#pass: 27    [0m[0m[1m[31m#fail: 2     [0m[0m[1m[35m#error: 1     [0m[0m[1m[37massertions: 150   [0m[0m[1m[37mtime: 0.086[0m[0m
+[1m[31m================================================================================[0m[0m

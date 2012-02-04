@@ -37,6 +37,11 @@ module SchoolRecord
       raise SR::SRError, msg
     end
 
+    def argument_error method_name
+      msg = "Argument error: #{method_name}"
+      raise SR::SRError, msg
+    end
+
     def multiple_students_match *args
       fragment, label, matches = args.shift(3)
       msg =  "Attempt to match name #{fragment} in class #{label}.\n"
@@ -57,7 +62,18 @@ module SchoolRecord
     end
 
     def invalid_object *args
-      msg = args.shift
+      object, msg = args.shift(2)
+      msg = "Invalid #{object.class} object -- #{msg}"
+      raise SR::SRError, msg
+    end
+
+    def invalid_term_date_string string
+      msg = "Invalid date specification: #{string}"
+      raise SR::SRError, msg
+    end
+
+    def invalid_date_not_this_year string
+      msg = "Invalid date (not this year): #{string}"
       raise SR::SRError, msg
     end
   end

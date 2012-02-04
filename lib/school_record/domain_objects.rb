@@ -150,18 +150,21 @@ module SchoolRecord
     # is responsibile for knowing the term times and determining what date
     # corresponds to what week, etc.  This class just conveys values.
     class SchoolDay
-      def initialize(date, term, week)
-        @date, @term, @week = date, term, week
+      def initialize(date, semester, week)
+        unless Date === date and semester.in? 1..2 and week.in? 1..30
+          sr_err :argument_error, "SchoolDay#initialize"
+        end
+        @date, @semester, @week = date, semester, week
       end
 
       # -> Date
       def date() @date end
 
       # -> 1 or 2
-      def semester() (@date.month <= 6) ? 1 : 2 end
+      def semester() @semester end
 
       # -> 1..4
-      def term() @term end
+      def term() sr_int "SchoolDay#term is not implemented" end
 
       # -> 1..20  (more like 1..18 or 1..19)
       def week() @week end
@@ -188,7 +191,6 @@ module SchoolRecord
       def day_of_cycle
         n = @date.wday    # 1..5 (for Mon..Fri)
         n += 5 if a_or_b == 'B'
-        trace :n, binding
         n
       end
 
@@ -198,7 +200,7 @@ module SchoolRecord
       def sem_date(include_semester=false)
         str = "#{day} #{weekstr}"
         if include_semester == true or include_semester == :semester
-          str = "Sem#{semester} " + str
+          str = "Sem#{@semester} " + str
         end
         str
       end

@@ -49,9 +49,10 @@ class SR::Calendar::Term
   # Returns nil if the resulting date is not in the term.
   def date(args)
     week, day = args[:week], args[:day]
-    unless day and week and week.in? @weeks and day.in? (1..5)
+    unless week and day and week > 0 and day.in? (1..5)
       sr_int "Invalid argument: #{args.inspect}"
     end
+    return nil unless week.in? @weeks
     date = monday_of_first_week + (week-1)*7 + (day-1)
     if self.include? date then date else nil end
   end
@@ -105,14 +106,15 @@ class SR::Calendar::Semester
   # date(week: 13, day: 5)
   def date(args)
     week, day = args[:week], args[:day]
-    unless day and week and week.in? (1..number_of_weeks) and day.in? (1..5)
+    unless week and day and week > 0 and day.in? (1..5)
       sr_int "Invalid argument: #{args.inspect}"
     end
+    return nil unless week.in? (1..number_of_weeks) 
     t1weeks, t2weeks = weeks_map   # [ (1..10), (11..19) ]
     if week.in? t1weeks
       @t1.date week: week, day: day
     elsif week.in? t2weeks
-      @t2.date week: (@t1.number_of_weeks + week), day: day
+      @t2.date week: (week - @t1.number_of_weeks), day: day
     else
       sr_int "Can't handle case of week == #{week}"
     end
@@ -122,15 +124,11 @@ class SR::Calendar::Semester
   # Returns nil if the given date is not in this term.
   def week_and_day(date)
     if not self.include? date
-      return nil
-    elsif (week_and_day = @t1.week_and_day(date))
-      return week_and_day
-    elsif (week_and_day = @t2.week_and_day(date))
-      weekm day = week_and_day
-      week += @t1.number_of_weeks
-      return [week, day]
-    else
-      sr_int "Impossible case (date == #{date})"
+      nil
+    elsif _ = (week, day = @t1.week_and_day(date))
+      [week, day]
+    elsif _= (week, day = @t2.week_and_day(date))
+      [week + @t1.number_of_weeks, day]
     end
   end
 

@@ -22,3 +22,6 @@ though.
 When that's done, I can implement Lessons, or Database#lessons\_for\_date, or
 however I want to do it. Still mulling over options for organising that future
 code.
+
+(4 Feb) Calendar::Semester is now tested pretty well. Another bug was found and
+fixed. Commit time, and I'll look at Calendar#schoolday next.

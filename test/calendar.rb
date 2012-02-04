@@ -51,10 +51,16 @@ D "Calendar::Term" do
     Eq @term.date(week: 8, day: 5), d('2012-06-15')
     D "Raises error on invalid input" do
       E(SR::SRInternalError) { @term.date(week: -3, day: 4) }
-      E(SR::SRInternalError) { @term.date(week: 11, day: 4) }
       E(SR::SRInternalError) { @term.date(week: 6,  day: 0) }
       E(SR::SRInternalError) { @term.date(week: 6,  day: 6) }
-      E(SR::SRInternalError) { @term.date(week: 10, day: 2) }
+      E(SR::SRInternalError) { @term.date(day:  3) }
+      E(SR::SRInternalError) { @term.date(week: 3) }
+      E(SR::SRInternalError) { @term.date(foo: 5, bar: 'x') }
+      E(SR::SRInternalError) { @term.date({}) }
+    end
+    D "Returns nil if week is not in term" do
+      N @term.date(week: 11, day: 4)
+      N @term.date(week: 10, day: 2)
     end
   end
 
@@ -141,13 +147,54 @@ D "Calendar::Semester" do
     Eq @sem.number_of_weeks, 19
   end
   D "#date(week: 7, day: 2) etc." do
+    Eq @sem.date(week: 7,  day: 2), d('2012-08-28')
+    Eq @sem.date(week: 8,  day: 3), d('2012-09-05')
+    Eq @sem.date(week: 9,  day: 4), d('2012-09-13')
+    Eq @sem.date(week: 10, day: 4), d('2012-09-20')   # Last day of term 3
+    Eq @sem.date(week: 10, day: 5), nil               # Fri 10B not included in term
+    Eq @sem.date(week: 11, day: 1), nil               # Mon 11A not included in term
+    Eq @sem.date(week: 11, day: 2), d('2012-10-09')   # First day of term 4
+    Eq @sem.date(week: 12, day: 3), d('2012-10-17')
+    Eq @sem.date(week: 13, day: 4), d('2012-10-25')
+    Eq @sem.date(week: 14, day: 5), d('2012-11-02')
+    Eq @sem.date(week: 15, day: 1), d('2012-11-05')
+    Eq @sem.date(week: 16, day: 2), d('2012-11-13')
+    Eq @sem.date(week: 17, day: 3), d('2012-11-21')
+    Eq @sem.date(week: 18, day: 4), d('2012-11-29')
+    Eq @sem.date(week: 19, day: 5), d('2012-12-07')   # Last day of term 4
+    Eq @sem.date(week: 20, day: 1), nil               # There is no week 20
     D "Handles the irregular start and end of term" do
+      # Already tested, but it's good to have the description.
       Eq @sem.date(week: 10, day: 5), nil
     end
   end
   D "#week_and_day" do
+    Eq @sem.week_and_day('2012-07-16'), [1,1]
+    Eq @sem.week_and_day('2012-07-24'), [2,2]
+    Eq @sem.week_and_day('2012-08-01'), [3,3]
+    Eq @sem.week_and_day('2012-09-12'), [9,3]
+    Eq @sem.week_and_day('2012-09-20'), [10,4]   # Last day term 3
+    Eq @sem.week_and_day('2012-10-09'), [11,2]   # First day term 4
+    Eq @sem.week_and_day('2012-10-18'), [12,4]
+    Eq @sem.week_and_day('2012-10-25'), [13,4]
+    Eq @sem.week_and_day('2012-10-25'), [13,4]
+    Eq @sem.week_and_day('2012-11-02'), [14,5]
+    Eq @sem.week_and_day('2012-11-05'), [15,1]
+    Eq @sem.week_and_day('2012-11-13'), [16,2]
+    Eq @sem.week_and_day('2012-11-21'), [17,3]
+    Eq @sem.week_and_day('2012-11-29'), [18,4]
+    Eq @sem.week_and_day('2012-12-05'), [19,3]
+    Eq @sem.week_and_day('2012-12-06'), [19,4]
+    Eq @sem.week_and_day('2012-12-07'), [19,5]
+    D "Returns nil if date is not in semester" do
+      N @sem.week_and_day('2012-09-21')    # Term ends Thu 20
+      N @sem.week_and_day('2012-10-08')    # Term begins Tue 09
+      N @sem.week_and_day('2012-09-26')    # In the holidays between terms
+      N @sem.week_and_day('2012-04-09')    # Way before this semester
+      N @sem.week_and_day('2012-12-25')    # Way after this semester
+    end
   end
-end
+end  # Calendar::Semester
 
 xD "Calendar#schoolday" do
   D.<< {
@@ -165,8 +212,8 @@ xD "Calendar#schoolday" do
     Eq @cal.schoolday("today").date, Date.new(2012, 3, 7)
   end
   D "yesterday" do
-    Eq @cal.schoolday("tomorrow").sem_date(true), "Sem1 Tue 7A"
-    Eq @cal.schoolday("tomorrow").date, Date.new(2012, 3, 6)
+    Eq @cal.schoolday("yesterday").sem_date(true), "Sem1 Tue 7A"
+    Eq @cal.schoolday("yesterday").date, Date.new(2012, 3, 6)
   end
   D "12B Thu (and Thu 12B)" do
     Eq @cal.schoolday("12B Thu").sem_date(true), "Sem1 Thu 12B"
@@ -189,6 +236,7 @@ xD "Calendar#schoolday" do
   end
   D "nil for days that are not school days" do
     N @cal.schoolday("Sunday")
-    N @cal.schoolday("2012-01-23")
+    N @cal.schoolday("2012-01-23")  # In the long holidays
+    # Also test dates like staff days, public holidays, speech day
   end
 end

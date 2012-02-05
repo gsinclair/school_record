@@ -8,7 +8,7 @@ module SchoolRecord
     end
     private :initialize
 
-    def lessons(schoolday)
+    def classes(schoolday)
       @days[schoolday.day_of_cycle - 1]
     end
 

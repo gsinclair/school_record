@@ -100,9 +100,25 @@ module SchoolRecord
     # Timetable.
 
     def timetable
-      path = @files.timetable_file
-      labels = valid_class_labels
-      @timetable ||= SR::Timetable.from_yaml(path, labels)
+      @timetable ||= (
+        path = @files.timetable_file
+        labels = valid_class_labels
+        SR::Timetable.from_yaml(path, labels)
+      )
+    end
+    # Returns the classes for a given day, or nil if that day isn't a school
+    # day.  For example:
+    #   @db.classes('yesterday')    # -> ['7', '9', '12', '10']
+    #   @db.classes('Saturday')     # -> nil
+    #   @db.classes('25 Apr')       # -> nil  (Anzac Day)
+    # This method takes account of non-school days, because Calendar#schoolday
+    # does, but it does not take account of obstacles (e.g. exams).
+    def classes(date_string)
+      if sd = calendar.schoolday(date_string)
+        timetable.classes(sd)
+      else
+        nil
+      end
     end
 
     # Calendar.

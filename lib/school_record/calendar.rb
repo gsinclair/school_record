@@ -341,8 +341,19 @@ class SR::Calendar::SchoolOrNaturalDateParser
       #   yesterday, Fri, two weeks ago, may 26, 3rd thursday this september, ...
     if c.nil?
       return nil
-    elsif c.year != Date.today.year
-      sr_err :invalid_date_not_this_year, string
+    elsif c.year != @calendar.today.year
+      # We don't want to deal with dates that are not in the current calendar
+      # year, but we have a problem. Say today is '4 Mar'. If we ask Chronic to
+      # parse '8 Aug' then it will give us a date from last year because of the
+      # context specified above. That's not what the user meant, so we have to
+      # correct it.  (The past context is important for things like 'Friday'.)
+      # We only correct it if the string is like '5 Aug' or 'Aug 5'
+      if string.strip =~ /\A\d{1,2} \s+ [A-z]{3}\Z/x or
+         string.strip =~ /\A[A-z]{3} \s+ \d{1,2}\Z/x
+        return Date.new(@calendar.today.year, c.month, c.day)
+      else
+        sr_err :invalid_date_not_this_year, string
+      end
     else
       return c.to_date
     end

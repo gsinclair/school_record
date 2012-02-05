@@ -14,15 +14,15 @@ D "Timetable" do
     sd08 = SR::DO::SchoolDay.new(date + 9,  1, 4)
     sd09 = SR::DO::SchoolDay.new(date + 10, 1, 4)
     sd10 = SR::DO::SchoolDay.new(date + 11, 1, 4)
-    Eq timetable.lessons(sd01), ['10','11','7','12']
-    Eq timetable.lessons(sd02), ['10','12','11','7']
-    Eq timetable.lessons(sd03), ['11','12','7','10']
-    Eq timetable.lessons(sd04), ['10','10','7','12']
-    Eq timetable.lessons(sd05), ['11','11','10','7']
-    Eq timetable.lessons(sd06), ['10','7','12','11']
-    Eq timetable.lessons(sd07), ['10','12','12','7']
-    Eq timetable.lessons(sd08), ['12','11','10','7']
-    Eq timetable.lessons(sd09), ['10','10','7','11']
-    Eq timetable.lessons(sd10), ['10','7','12','11']
+    Eq timetable.classes(sd01), ['10','11','7','12']
+    Eq timetable.classes(sd02), ['10','12','11','7']
+    Eq timetable.classes(sd03), ['11','12','7','10']
+    Eq timetable.classes(sd04), ['10','10','7','12']
+    Eq timetable.classes(sd05), ['11','11','10','7']
+    Eq timetable.classes(sd06), ['10','7','12','11']
+    Eq timetable.classes(sd07), ['10','12','12','7']
+    Eq timetable.classes(sd08), ['12','11','10','7']
+    Eq timetable.classes(sd09), ['10','10','7','11']
+    Eq timetable.classes(sd10), ['10','7','12','11']
   end
 end

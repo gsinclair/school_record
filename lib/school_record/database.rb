@@ -127,6 +127,26 @@ module SchoolRecord
       @calendar ||= SR::Calendar.new( @files.calendar_file )
     end
 
+    # Lessons.
+
+    # database.lessons('today')  # -> Lessons
+    def lessons(date_string)
+      if sd = calendar.schoolday(date_string)
+        lessons_for_day(sd)
+      else
+        nil   # Maybe raise error.
+      end
+    end
+
+    def lessons_for_day(sd)
+      key = sd.date
+      if @lessons_by_day[key].nil?
+        @lessons_by_day[key] = Lessons.load(@files.lessons_file(sd).read)
+      end
+      @lessons_by_day[key]
+    end
+    private :lessons_for_day
+
   end  # class Database
 
   class Database::Dirs
@@ -153,6 +173,13 @@ module SchoolRecord
     end
     def calendar_file
       @cf ||= @directory + "Config/calendar.yaml"
+    end
+    def lessons_file(sd)
+      semester = "Sem#{sd.semester}"
+      week = sprintf "%0d", sd.week
+      date = sd.date.to_s
+      day  = sd.day
+      @directory + "#{semester}/#{week}/#{date}-#{day}.yaml"
     end
   end  # class Database::Files
 

@@ -11,7 +11,8 @@ module SchoolRecord
       note: SR::Command::NoteCmd,
       edit: SR::Command::EditCmd,
       report: SR::Command::ReportCmd,
-      config: SR::Command::ConfigCmd
+      config: SR::Command::ConfigCmd,
+      enter: SR::Command::EnterLesson,
     }
 
     def run(args)

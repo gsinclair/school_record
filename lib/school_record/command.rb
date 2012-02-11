@@ -65,6 +65,28 @@ end
 
 # --------------------------------------------------------------------------- #
 
+class SR::Command::EnterLesson < SR::Command
+  def run(args)
+    class_label, description = required_arguments(args, 2)
+    date_string = 'today'           # Maybe have a way to specify this.
+    emit "Saving lesson record for class #{class_label}"
+    lessons = @db.lessons(date_string)
+    lessons.store(class_label, description)
+    @db.save_lessons(lessons)
+  end
+  def usage_text
+    msg = %{
+      - The 'enter' command takes two arguments:
+      -   * class label
+      -   * string describing the lesson (use quotes)
+      - Example:
+      -   sr enter 10 "Cosine rule. hw:(7-06 Q1-4)"
+    }.margin
+  end
+end
+
+# --------------------------------------------------------------------------- #
+
 require 'school_record/report'
 
 class SR::Command::ReportCmd < SR::Command

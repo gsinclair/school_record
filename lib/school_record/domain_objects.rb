@@ -204,6 +204,9 @@ module SchoolRecord
         end
         str
       end
+
+      def full_sem_date()  sem_date(:semester)  end
+      def short_sem_date() sem_date(false)      end
     end  # class SchoolDay
 
   end  # module DomainObjects

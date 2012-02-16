@@ -69,10 +69,15 @@ class SR::Command::EnterLesson < SR::Command
   def run(args)
     class_label, description = required_arguments(args, 2)
     date_string = 'today'           # Maybe have a way to specify this.
-    emit "Saving lesson record for class #{class_label}"
-    lessons = @db.lessons(date_string)
-    lessons.store(class_label, description)
-    @db.save_lessons(lessons)
+    # Basically, we hand this to Database. It can check whether this lesson has
+    # already been defined, and save it if not.
+    lesson, stored = @db.store_lesson(date_string, class_label, description)
+    if stored
+      emit "Saving lesson record for class #{class_label}"
+    else
+      emit "A lesson for class #{class_label} already exists; not overwriting."
+      emit "Existing description: #{lesson.description}"
+    end
   end
   def usage_text
     msg = %{

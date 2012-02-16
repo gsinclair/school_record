@@ -1,12 +1,14 @@
 require 'pathname'
 require 'yaml'
 require 'pp'
+require 'data_mapper'
 
 module SchoolRecord
   # A Database stores Note and Lesson objects in an organised way and persists
   # them to disk. It needs to know the base directory where it can read and
   # write its data. The recommended way to create or access a Database object is
   # to use one of the factory methods:
+  #   db = Database.dev
   #   db = Database.test
   #   db = Database.production
   # More of these could be defined, for instance if there were test scenarios
@@ -14,9 +16,11 @@ module SchoolRecord
   #
   class Database
     def Database.dev
-      @testdb ||= Database.new( Dirs.dev_database_directory )
+      debug "Using DEV database"
+      @devdb ||= Database.new( Dirs.dev_database_directory )
     end
     def Database.test
+      debug "Using TEST database"
       @testdb ||= Database.new( Dirs.test_database_directory )
     end
 
@@ -26,7 +30,9 @@ module SchoolRecord
         # { '7' -> (SchoolClass), '10' -> (SchoolClass), ... }
       @notes = load_notes
         # { '7' -> [Note, Note, ...], ... }
+      initialize_datamapper
     end
+    private :initialize
 
     # Notes.
 
@@ -129,6 +135,25 @@ module SchoolRecord
 
     # Lessons.
 
+    # Return:: [Lesson, Boolean]
+    # Lesson is the object that is created or that already existed.  The Boolean
+    # value is true if an object was created; false otherwise.  We don't
+    # overwrite an existing lesson.
+    def store_lesson(date_string, class_label, description)
+      sd = calendar.schoolday(date_string)
+      sd_str = sd.full_sem_date
+      # See if a lesson already exists. We don't want to overwrite it.
+      lesson = Lesson.first(schoolday: sd_str, class_label: class_label)
+      debug "Search for existing lesson revealed: #{lesson}"
+      if lesson
+        return [lesson, false]
+      else
+        lesson = Lesson.create(schoolday: sd_str, class_label: class_label,
+                               description: description)
+        return [lesson, true]
+      end
+    end
+
     # database.lessons('today')  # -> Lessons
     def lessons(date_string)
       if sd = calendar.schoolday(date_string)
@@ -139,6 +164,7 @@ module SchoolRecord
     end
 
     def lessons_for_day(sd)
+      # TODO: re-implement using DataMapper
       key = sd.date
       if @lessons_by_day[key].nil?
         @lessons_by_day[key] = Lessons.load(@files.lessons_file(sd).read)
@@ -146,6 +172,23 @@ module SchoolRecord
       @lessons_by_day[key]
     end
     private :lessons_for_day
+
+    # Sqlite
+
+    def initialize_datamapper
+      sr_err :datamapper_already_initialized if @datamapper_initialized
+      DataMapper::Logger.new($stdout, :debug)
+      path = @files.sqlite_database_file.to_s
+      debug "Database path: #{path}"
+      DataMapper.setup(:default, "sqlite3://#{path}")
+      require 'school_record/lesson'
+      DataMapper.finalize
+      DataMapper.auto_upgrade!
+      debug "There are #{Lesson.all.count} lessons in the database."
+      debug Lesson.all.map { |l| l.inspect }.join("\n")
+      @datamapper_initialized = true
+    end
+    private :initialize_datamapper
 
   end  # class Database
 
@@ -174,12 +217,8 @@ module SchoolRecord
     def calendar_file
       @cf ||= @directory + "Config/calendar.yaml"
     end
-    def lessons_file(sd)
-      semester = "Sem#{sd.semester}"
-      week = sprintf "%0d", sd.week
-      date = sd.date.to_s
-      day  = sd.day
-      @directory + "#{semester}/#{week}/#{date}-#{day}.yaml"
+    def sqlite_database_file
+      @sqlite ||= @directory.realpath + "lessons_and_notes.db"
     end
   end  # class Database::Files
 

@@ -6,3 +6,4 @@ debug.log
 tags
 etc/dev-db/notes.yaml
 commit_message.txt
+etc/dev-db/lessons_and_notes.db

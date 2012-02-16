@@ -86,3 +86,71 @@ Here is the relevant code.
 
 Committing the code now so I have a fresh start for further work on the SQLite
 side of things.
+
+## Getting period information into the timetable
+
+To address the timetable side of things, I'm starting to think the timetable
+needs to include information about the period for each lesson. I kinda can't be
+bothered implementing that, but it's starting to look inevitable. Each lesson
+object would know what period it is, and that would make it easy to store
+doubles.
+
+At the moment Config/timetable.yaml looks like this:
+
+    WeekA:
+      Mon: "10,11,7,12"
+      Tue: "10,12,11,7"
+      Wed: "11,12,7,10"
+      ...
+
+With period information it could be
+
+    WeekA:
+      Mon: "10:a,11:1,7:4,12:5"
+      Tue: "10:2,12:3,11:4,7:5"
+      Wed: "11:1,12:2,7:4,10:5"
+      ...
+
+or
+
+    WeekA:
+      Mon: "10,11,_,_,7,12,_"
+      Tue: "_,_,10,12,11,7,_"
+      Wed: "_11,12,_,7,10,_"
+      ...
+
+I prefer the latter. The first period in the list is "alpha". Maybe that can
+just be the number zero in the database.
+
+What about the Timetable object?  The current API is simply
+
+    timetable.classes(sd)  # -> ['10', '10', '7', '12']
+
+I don't see a need for that method to change, but I guess we could have
+
+    timetable.lessons(sd)  # -> [ ['10',0], ['10',1], ['7',2], ['12',5] ]
+
+Perhaps there would be no need for #classes anymore since any code that works
+with the SQLite database would need to know what period things were on.  The
+method name "lessons" may be confusing, suggesting that it returns an array of
+Lesson objects.  `classes_and_periods`?  Or simply redefine `classes`?
+
+It appears that the `classes` method is not actually used at the moment! So I'll
+probably redefine it, and implement `class_labels_only` just in case I want that
+functionality.  Reimplementing `classes` will mean changing the test files as
+well, of course.
+
+Done. I now have
+
+    timetable.classes            # -> [ ['10',0], ['10',1], ['7',2], ['12',5] ]
+    timetalbe.class_labels_only  # -> ['10', '10', '7', '12']
+
+There is a new nested class behind the scenes, Day, that encapsulates timetable
+information about a single day.  It's not exposed, though: its methods just
+return the arrays above. There is potential to get information like "what is on
+period 6", but I'll wait for a need before implementing it.
+
+The test code is updated too.  It (still) doesn't test that an erroneous config
+file raises an error, but that's not too important.
+
+Committing.

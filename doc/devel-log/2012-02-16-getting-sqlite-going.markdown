@@ -154,3 +154,118 @@ The test code is updated too.  It (still) doesn't test that an erroneous config
 file raises an error, but that's not too important.
 
 Committing.
+
+## Getting period data into Lesson objects
+
+Adding the property is easy.
+
+    class Lesson
+      include DataMapper::Resource
+      property :id,          Serial
+      property :schoolday,   String     # "Sem1 3A Fri"
+      property :class_label, String     # "10"
+      property :period,      Integer    # (0..6), 0 being before school
+      property :description, Text       # "Completed yesterday's worksheet. hw:(4-07)"
+    end
+
+Now what? Here is `Database#store_lesson`:
+
+    # Return:: [Lesson, Boolean]
+    # Lesson is the object that is created or that already existed.  The Boolean
+    # value is true if an object was created; false otherwise.  We don't
+    # overwrite an existing lesson.
+    def store_lesson(date_string, class_label, description)
+      sd = calendar.schoolday(date_string)
+      sd_str = sd.full_sem_date
+      # See if a lesson already exists. We don't want to overwrite it.
+      lesson = Lesson.first(schoolday: sd_str, class_label: class_label)
+      debug "Search for existing lesson revealed: #{lesson}"
+      if lesson
+        return [lesson, false]
+      else
+        lesson = Lesson.create(schoolday: sd_str, class_label: class_label,
+                               description: description)
+        return [lesson, true]
+      end
+    end
+
+The code that says `Lesson.first` is the heart of the problem. We really need a
+new object -- LessonsForADay or something -- that takes care of finding a blank
+lesson for a given timetabled day (taking account of public holidays,
+excursions, etc.). I just wish I could think of a good name. Anyway, here is
+some possible code.
+
+    class Database:
+      def store_lesson(date_string, class_label, description, period=nil)
+        lfad = LessonsForADay.new(self, date_string)
+        lfad.store_lesson(class_label, period, description)
+          # returns [Lesson, Boolean]
+      end
+
+    class LessonsForADay:
+      def initialize(database, date_string)
+        @database  = database
+        @schoolday = database.schoolday(date_string)
+        @classes   = database.classes(@schoolday)
+                        # -> [ ['10',1], ['7',2], ['12',5] ]
+        @obstacles = database.obstacles(@schoolday)  # not sure of this API
+                        # -> [ Obstacle, ... ]
+      end
+
+      # If period is nil, the first available period is taken.
+      def store_lesson(class_label, period, description)
+        matching_classes = @classes.select { |cl, pd| cl == class_label }
+          # -> [ ['10',0], ['11',1] ]
+        matching_classes = matching_classes.reject { |pd, cl| ... }
+      end
+
+I don't like the style of code I'm writing here. It doesn't feel like the right
+design. I especially don't like the arrays that are passed around to include a
+class label and a period number. This should be an object, and I think I've
+found the right one:
+
+    class TimetabledLesson
+      schoolday
+      class_label
+      period
+      obstacle?
+      obstacle
+
+This provides information about, well, a timetabled lesson.  The "Lesson" class
+should probably change its name to "LessonDescription", because that's what it
+contains.
+
+    sd = database.schoolday('Fri 3A')
+    database.timetabled_lessons(sd)
+      # -> [ TimetabledLesson, ... ]         (all classes for that day)
+    database.timetabled_lessons(sd, '12')
+      # -> [ TimetabledLesson, ... ]         (all Year 12 classes for that day)
+
+The TimetabledLesson objects returned have obstacle information built into them.
+That should make it easier to store a lesson on a given day, and hopefully will
+mean I _don't_ need a class just for handling a day's worth of lessons. The
+array of TimetabledLesson objects will have enough smarts.
+
+I guess the Database class could maintain a hash of the LessonDescription
+corresponding to each TimetabledLesson. There may be a use for that.
+
+I feel like I'm finally making conceptual progress now. Here's what has to
+happen:
+
+* Design, implement and test obstacles.
+* Implement and test TimetabledLesson (probably not much to test).
+* Implement and test Database#timetabled\_lessons (this is where the real tests
+  will be).
+* Implement Database#store\_lesson.
+
+At this point, I'll need to work out how I'm going to test sqlite-related stuff,
+like storing lessons.
+
+Another thought: it's possible I will need a TimetabledLessons class to
+encapsulate a group of them, and which provides convenience methods that iterate
+over the group. But the group need not necessarily be a day's worth of lessons.
+I'll avoid this class if I can, though.
+
+(This is all 17 Feb, by the way.)
+
+

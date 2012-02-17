@@ -143,6 +143,9 @@ module SchoolRecord
       sd = calendar.schoolday(date_string)
       sd_str = sd.full_sem_date
       # See if a lesson already exists. We don't want to overwrite it.
+      # TODO: take the period into account. Don't want to implement the
+      # low-level code for that here. Probably need an intermediate object that
+      # groups the lessons for a day, or something.
       lesson = Lesson.first(schoolday: sd_str, class_label: class_label)
       debug "Search for existing lesson revealed: #{lesson}"
       if lesson

@@ -1,3 +1,5 @@
+require 'data_mapper'
+
 require 'debuglog'
 require 'pry'
 
@@ -13,12 +15,9 @@ require 'school_record/err'
 require 'school_record/app'
 require 'school_record/report'
 require 'school_record/command'
-require 'school_record/date_string'
+require 'school_record/date_string'     # TODO: move DateString to DomainObjects?
 require 'school_record/domain_objects'
 require 'school_record/timetable'
 require 'school_record/calendar'
 require 'school_record/obstacle'
 require 'school_record/database'
-# We don't require 'school_record/lesson', because that requires a database to
-# be selected (dev, test, prd). The Database class loads 'lesson' at the
-# appropriate time.

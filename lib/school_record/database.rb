@@ -4,10 +4,10 @@ require 'pp'
 require 'data_mapper'
 
 module SchoolRecord
-  # A Database stores Note and Lesson objects in an organised way and persists
-  # them to disk. It needs to know the base directory where it can read and
-  # write its data. The recommended way to create or access a Database object is
-  # to use one of the factory methods:
+  # A Database stores Note and LessonDescription objects in an organised way and
+  # persists them to disk. It needs to know the base directory where it can read
+  # and write its data. The recommended way to create or access a Database
+  # object is to use one of the factory methods:
   #   db = Database.dev
   #   db = Database.test
   #   db = Database.production
@@ -15,24 +15,65 @@ module SchoolRecord
   # requiring different databases.
   #
   class Database
-    def Database.dev
-      debug "Using DEV database"
-      @devdb ||= Database.new( Dirs.dev_database_directory )
-    end
-    def Database.test
-      debug "Using TEST database"
-      @testdb ||= Database.new( Dirs.test_database_directory )
+
+    attr_reader :label       # :dev, :test or :prd
+
+    def Database.dev()  Database.init(:dev)  end
+    def Database.test() Database.init(:test) end
+    def Database.prd()  Database.init(:prd)  end
+
+    # Initialises the database (sqlite and yaml files) for use.
+    # Label must be one of :dev, :test, or :prd.
+    # Only one database can be loaded. An error will result in trying to load a
+    # second one. That's because DataMapper configuration is global.
+    # You can "init" the same label many times; it will return a cached object.
+    def Database.init(label)
+      sr_err :invalid_database, label unless label.in? [:dev, :test, :prd]
+      if @database and @database.label != label
+        sr_err :database_already_loaded, existing: @database, requested: label
+      elsif @database
+        debug "Using #{label.to_s.upcase} database (already loaded)"
+        return @database
+      else
+        debug "Loading #{label.to_s.upcase} database"
+        @database = Database.new(label, Dirs.database_directory(label))
+        return @database
+      end
     end
 
-    def initialize(directory)
+    # This method is called only by Database.dev or Database.test or
+    # Database.prd, and it's only called once (for each of those), so we should
+    # do _all_ setup related to the database here, including setting up
+    # datamapper (but that's a global setup...), requiring some of the files
+    # (domain_objects.rb or perhaps a subset, database_objects.rb).
+    def initialize(label, directory)
+      @label = label
       @files = Files.new(directory)
       @classes = load_class_lists
         # { '7' -> (SchoolClass), '10' -> (SchoolClass), ... }
       @notes = load_notes
         # { '7' -> [Note, Note, ...], ... }
-      initialize_datamapper
+      initialize_datamapper(@files.sqlite_database_file)
+      require 'school_record/lesson_description'
+      finalize_datamapper
+      debug "There are #{LessonDescription.all.count} lessons in the database."
+      debug LessonDescription.all.map { |l| l.inspect }.join("\n")
     end
     private :initialize
+
+    def initialize_datamapper(database_path)
+      DataMapper::Logger.new($stdout, :debug)
+      path = database_path.to_s
+      debug "SQLite database path: #{path}"
+      DataMapper.setup(:default, "sqlite3://#{path}")
+    end
+    private :initialize_datamapper
+
+    def finalize_datamapper
+      DataMapper.finalize
+      DataMapper.auto_upgrade!
+    end
+    private :finalize_datamapper
 
     # Notes.
 
@@ -52,6 +93,7 @@ module SchoolRecord
         end
       end
     end
+    private :load_notes
     def save_note(note)
       @notes[note.student.class_label] << note
       @files.notes_file.open('w') do |out|
@@ -90,6 +132,7 @@ module SchoolRecord
       end
       result
     end
+    private :load_class_lists
     def valid_class_label?(label)
       @classes.key? label
     end
@@ -149,12 +192,12 @@ module SchoolRecord
       @calendar ||= SR::Calendar.new( @files.calendar_file )
     end
 
-    # Lessons.
+    # Lessons (as in LessonDescriptions).
 
-    # Return:: [Lesson, Boolean]
-    # Lesson is the object that is created or that already existed.  The Boolean
-    # value is true if an object was created; false otherwise.  We don't
-    # overwrite an existing lesson.
+    # Return:: [LessonDescription, Boolean]
+    # LessonDescription is the object that is created or that already existed.
+    # The Boolean value is true if an object was created; false otherwise.  We
+    # don't overwrite an existing lesson.
     def store_lesson(date_string, class_label, description)
       sd = calendar.schoolday(date_string)
       sd_str = sd.full_sem_date
@@ -162,61 +205,42 @@ module SchoolRecord
       # TODO: take the period into account. Don't want to implement the
       # low-level code for that here. Probably need an intermediate object that
       # groups the lessons for a day, or something.
-      lesson = Lesson.first(schoolday: sd_str, class_label: class_label)
+      lesson = LessonDescription.first(schoolday: sd_str, class_label: class_label)
       debug "Search for existing lesson revealed: #{lesson}"
       if lesson
         return [lesson, false]
       else
-        lesson = Lesson.create(schoolday: sd_str, class_label: class_label,
-                               description: description)
+        lesson = LessonDescription.create(schoolday: sd_str,
+                                          class_label: class_label,
+                                          description: description)
         return [lesson, true]
       end
     end
 
-    # database.lessons('today')  # -> Lessons
+    # database.lessons('today')  # -> [ LessonDescription ]
+    # NOTE: This method will almost certainly be replaced by timetabled_lessons.
     def lessons(date_string)
       if sd = calendar.schoolday(date_string)
-        lessons_for_day(sd)
+        # lessons_for_day(sd)
+        # NOTE: above line commented out because lessons_for_day assumed the
+        # existence of class Lessons, which was based on the YAML approach.
       else
         nil   # Maybe raise error.
       end
     end
 
-    def lessons_for_day(sd)
-      # TODO: re-implement using DataMapper
-      key = sd.date
-      if @lessons_by_day[key].nil?
-        @lessons_by_day[key] = Lessons.load(@files.lessons_file(sd).read)
-      end
-      @lessons_by_day[key]
-    end
-    private :lessons_for_day
-
-    # Sqlite
-
-    def initialize_datamapper
-      sr_err :datamapper_already_initialized if @datamapper_initialized
-      DataMapper::Logger.new($stdout, :debug)
-      path = @files.sqlite_database_file.to_s
-      debug "Database path: #{path}"
-      DataMapper.setup(:default, "sqlite3://#{path}")
-      require 'school_record/lesson'
-      DataMapper.finalize
-      DataMapper.auto_upgrade!
-      debug "There are #{Lesson.all.count} lessons in the database."
-      debug Lesson.all.map { |l| l.inspect }.join("\n")
-      @datamapper_initialized = true
-    end
-    private :initialize_datamapper
-
   end  # class Database
 
   class Database::Dirs
-    def self.dev_database_directory
-      @dir ||= Pathname.new("etc/dev-db").tap { |p| p.mkpath }
-    end
-    def self.test_database_directory
-      @dir ||= Pathname.new("test/db").tap { |p| p.mkpath }
+    def self.database_directory(label)
+      case label
+      when :dev
+        Pathname.new("etc/dev-db").tap { |p| p.mkpath }
+      when :test
+        Pathname.new("test/db").tap { |p| p.mkpath }
+      when :prd
+        sr_int "Production database directory not yet defined"
+      end
     end
   end  # class Database::Dirs
 

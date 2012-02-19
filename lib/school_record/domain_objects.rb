@@ -225,6 +225,8 @@ module SchoolRecord
       def short_sem_date() sem_date(false)      end
     end  # class SchoolDay
 
+    # --------------------------------------------------------------------------- #
+
   end  # module DomainObjects
 
   # DO is a useful abbreviation, allowing refs like SR::DO::Note.

@@ -36,6 +36,26 @@ D "SchoolDay" do
     Eq sd.sem_date(true),      'Sem2 Fri 15A'
   end
 
+  D "Equality" do
+    sd1 = SR::DO::SchoolDay.new(Date.new(2012,11,9), 2, 15)
+    sd2 = SR::DO::SchoolDay.new(Date.new(2012,11,9), 2, 15)
+    sd3 = SR::DO::SchoolDay.new(Date.new(2012,11,8), 2, 15)
+    Eq  sd1, sd2
+    Eq  sd2, sd1
+    Eq! sd2, sd3
+    Eq! sd3, sd2
+  end
+
+  D "Comparison" do
+    sd1 = SR::DO::SchoolDay.new(Date.new(2012,2,20), 1, 4)
+    sd2 = SR::DO::SchoolDay.new(Date.new(2012,2,21), 1, 4)
+    sd3 = SR::DO::SchoolDay.new(Date.new(2012,2,22), 1, 4)
+    T { sd1 < sd2 }
+    T { sd2 < sd3 }
+    T { sd2 > sd1 }
+    T { sd3 > sd2 }
+  end
+
   D "Error when given bad input" do
     E(SR::SRError) { SR::DO::SchoolDay.new(Date.new(2012,11,9), 3, 14)}
     E(SR::SRError) { SR::DO::SchoolDay.new(Date.new(2012,11,9), 1, 50)}

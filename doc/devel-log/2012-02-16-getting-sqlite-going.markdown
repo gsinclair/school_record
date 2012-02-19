@@ -143,7 +143,7 @@ well, of course.
 Done. I now have
 
     timetable.classes            # -> [ ['10',0], ['10',1], ['7',2], ['12',5] ]
-    timetalbe.class_labels_only  # -> ['10', '10', '7', '12']
+    timetable.class_labels_only  # -> ['10', '10', '7', '12']
 
 There is a new nested class behind the scenes, Day, that encapsulates timetable
 information about a single day.  It's not exposed, though: its methods just
@@ -268,4 +268,232 @@ I'll avoid this class if I can, though.
 
 (This is all 17 Feb, by the way.)
 
+Code committed to give me a fresh base. The only code actually committed was
+the 'period' property in the Lesson class :)  But the notes in this file were an
+important part of that commit as well.
 
+## Obstacles
+
+These have been a conceptual part of the system since the initial brainstorm,
+but no design or implementation has been done since then. These can be pretty
+dumb objects that simply reflect the YAML file containing them. The Database
+object can organise them (probably just an array; maybe a hash) and sort the
+information into TimetabledLesson objects.
+
+    obstacles.yaml:
+
+        Sem1:
+          - date: 3 June
+            classes: 7, 10
+            reason: Moderator's assembly
+          - date: 12B-Wed
+            class: 7
+            reason: Geography excursion
+          - dates: ["9A-Mon", "9A-Thu"]
+            class: 7
+            reason: Exams
+          - date: 3A-Mon
+            class: 11(4)
+            reason: Maths assembly
+        Sem2:
+          - ...
+
+This is the 'ap' output for the Sem1 part of the above YAML snippet.
+
+    {
+      "Sem1" => [
+        [0] {
+              "date" => "3 June",
+           "classes" => "7, 10",
+            "reason" => "Moderator's assembly"
+        },
+        [1] {
+              "date" => "12B-Wed",
+             "class" => 7,
+            "reason" => "Geography excursion"
+        },
+        [2] {
+             "dates" => [
+                [0] "9A-Mon",
+                [1] "9A-Thu"
+            ],
+             "class" => 7,
+            "reason" => "Exams"
+        },
+        [3] {
+              "date" => "3A-Mon",
+             "class" => "11(4)",
+            "reason" => "Maths assembly"
+        }
+      ]
+    }
+
+From that data, I can see an object like this:
+
+    class Obstacle
+      dates()
+      classes()
+      period()     # will be nil most of the time
+      reason()
+      match?(schoolday, class_label)
+
+That "match?" method will be key in determining whether an obstruction affects a
+given class on a given day.
+
+The object can be initialized with a hash, so it can interpret the "date" or
+"dates" keys, etc. So the guts of this class are the methods initialize() and
+match?(schoolday, class\_label).
+
+A period can be specified in the YAML file, to handle those cases where a class
+has more than one lesson in a day, and only one of them is obstructed.  If no
+period is specified, then _all_ classes with the given class label are included
+in the obstacle. The period is demonstrated in this fragment:
+
+          - date: 3A-Mon
+            class: 11(4)
+            reason: Maths assembly
+
+It remains to be seen how "match?" works with specified periods. Time will tell.
+
+...
+
+After some considerable work writing tests for Obstacle and then implementing
+it, including classes SR::Obstacle and SR::ObstacleCreator, I've hit a painful
+realisation:
+
+* Calendar#schoolday has a bias towards interpreting dates in the _past_. If you
+  type "Fri" at the command-line when wanting to enter lesson notes, you
+  obviously mean _last_ Friday.
+* Obstacles, however, can naturally be specified in the _future_.  So if an
+  obstacle is dated "5 June" and it's currently 18 Feb 2012, then Chronic will
+  return 5-Jun-2011. It's just doing what it's told with the `context: :past`
+  option.
+* Some ways to resolve this:
+    * Always massage the generated date to be this year. (Hack.)
+    * Apply the `:context` option sparingly, only when it is detected that the
+      date string is something simple like "Fri".
+        * It would be nice if Chronic had a context "this year" instead of just
+          "past" and "future"...
+    * Implement a class DateString that does some rudimentary parsing and can
+      answer questions about the type of content: does it have a day, a week, a
+      semester, a month, ...?
+
+I'm pretty sure I will go with the DateString class, and even change the
+implementation of Calendar#schoolday to use it. Some code could then be:
+
+    ds = DateString.new(string)
+    if ds.contains_only?(:wday, :week)
+      string << " Sem#{semester}"
+    end
+    if ds.contains_only?(:mday, :month)
+      string << " #{Date.today.year}"
+    end
+    @calendar.schoolday(string)
+
+[Aside] I just noticed that Note is in DomainObjects but Lesson is not, even
+though they are both clearly domain objects and will both be stored in the
+sqlite database.  I think I should move Lesson to DomainObjects and move the
+sqlite setup away from Database and into lib/school\_record.rb.  (Not in this
+commit.)
+
+OK, DateString is implemented and tested.  It's not time to commit, though,
+because Obstacle is in mid-implementation.  This testing extract demonstrates
+the DateString API:
+
+    ds = SR::DateString.new("Mon-13A")
+    F ds.iso_date?
+    T ds.contains?(:wday)
+    T ds.contains?(:sem_week)
+    T ds.contains?(:wday, :sem_week)
+    T ds.contains_only?(:wday, :sem_week)
+    F ds.contains?(:year)
+    T ds.semester_style?
+    F ds.day_month_style?
+    Eq ds.to_s, "Mon-13A"
+
+Back to obstacles.  I used DateString to solve that problem of dates being
+inappropriately in the past.  Nice and elegant.  The following tests now pass:
+
+    D "First one: 5 Jun" do
+      ob = @obstacles.shift
+      sd_5_jun = @cal.schoolday('2012-06-05')
+      sd_6_jun = @cal.schoolday('2012-06-06')
+      Eq ob.schooldays.first, sd_5_jun
+      Eq ob.class_labels, ['7', '10']
+      Eq ob.reason, "Moderator's assembly"
+      Eq ob.period, nil
+
+But the next one fails:
+
+      T  ob.match?(sd_5_jun, '7')
+
+I'm leaving it here and going to bed. This is just to remind myself where to
+pick up.
+
+_(Sun 19 Feb)_
+
+Obstacle matching is now done. Along the way I made SchoolDay objects
+Comparable (by delegating to their date).
+
+Last problem: obstacles that concern specific periods. I've deferred thinking
+about this problem until necessary, and now it's necessary. Obstacle objects can
+currently have a period, like
+
+    - date: 3A-Mon
+      class: 11(4)
+      reason: Maths assembly
+
+but it's not implemented yet. In fact the current code simply assigns '11(4)' to
+the class in that case.
+
+After some consideration, I've decided it's time to introduce a value object to
+look after these things: the Lesson.
+
+## Lesson, revisited
+
+My current Lesson class is more properly named LessonDescription, as mentioned
+earlier. It is now time to make that change and introduce a value object called
+Lesson, which simply encapsulates a certain class having a lesson at a certain
+time (period) of a certain day.
+
+    class Lesson
+      class_label
+      period
+      schoolday      # may be nil (?)
+
+I already have something like this in TimetabledLesson, which looks like
+
+    class TimetabledLesson
+      schoolday      # may not be nil
+      class_label
+      period
+      obstacle?
+      obstacle
+
+Perhaps it is not necessary to have both of these, but I don't see it yet.
+TimetabledLesson has a particular purpose: to know which lessons are supposed to
+be on a particular day and know if they are obstructed by an assembly, etc. They
+are concrete objects that will match up with a LessonDescription that resides,
+or is soon to reside, in the database. (In fact, "description" could even be a
+method on TimetabledLesson, not that I'm thinking that at the moment.)
+
+Lesson, on the other hand, is just a value object for passing to methods, to
+specify a putative lesson. It may not even need a "schoolday" property; it's the
+confluence of class\_label and period that is most needed.
+
+So the plan is:
+
+* Change Lesson to LessonDescription throughout the code.
+* Introduce Lesson, where schoolday may be nil.
+* Use this object wherever possible, and make all the relevant code
+  period-aware.
+* See what uses it has. Maybe I don't need "schoolday" at all (it can be a
+  separate parameter when needed); maybe I can use TimetabledLesson some of the
+  time.
+
+Keep in mind: TimetabledLesson is important for the operation of the
+application. Lesson is just a value object that helps to generate the
+TimetabledLesson objects.
+
+Committing code (not much) and this file (much) to create a fresh conceptual
+space for the above plan to be implemented.

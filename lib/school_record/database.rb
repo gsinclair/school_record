@@ -127,6 +127,22 @@ module SchoolRecord
       end
     end
 
+    # NOTE: This is a stop-gap method to help tests pass that were breaking
+    # because of changes being introduced to the code. When there is a better,
+    # program-wide conception of "lessons" (class_label and period), I can
+    # hopefully remove this method and maybe even the one above, as I will be
+    # implementing Database#timetabled_lessons.
+    #
+    # If Database#classes is to remain, then it should probably be called
+    # Database#lessons instead, returning an array of Lesson objects.
+    def class_labels_only(date_string)
+      if sd = calendar.schoolday(date_string)
+        timetable.class_labels_only(sd)
+      else
+        nil
+      end
+    end
+
     # Calendar.
 
     def calendar

@@ -157,6 +157,22 @@ module SchoolRecord
         @date, @semester, @week = date, semester, week
       end
 
+      def <=> (other)
+        self.date <=> other.date
+      end
+      include Comparable
+
+      def ==(other)
+        self.class == other.class and
+          self.date == other.date and
+          self.semester == other.semester and
+          self.week == other.week
+      end
+
+      def hash
+        [@date, @semester, @week].hash
+      end
+
       # -> Date
       def date() @date end
 

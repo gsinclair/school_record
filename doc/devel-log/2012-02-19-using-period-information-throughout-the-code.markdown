@@ -128,3 +128,98 @@ Commit message: Lesson -> LessonDescription; better sqlite initialisation
 * All tests pass except for the Obstacle one involving period 4, which all
   this refactoring is aiming to fix.
 
+## Introduce Lesson, where schoolday may be nil
+
+The simple Lesson class can go in DomainObjects. I'm still not sure how it's
+going to be used, especially regarding the possibly nil schoolday. The way I
+see it, it's just a value object and may not get used in many places. But
+even if it is just used to help create TimetabledLesson objects, that is a
+job well done. Anyway, we'll see.
+
+One place where Lesson needs to be used is Obstacle. Instead of storing an
+array of schooldays and an array of classes and a single period (that
+doesn't make sense), it can store:
+
+* An array of dates (not schooldays, dates)
+* An array of Lessons:
+    * The schoolday in each is nil
+    * The class\_label is defined
+    * The period may or may not be nil
+
+So the following obstacle yaml snippets would produce the subsequent
+Obstacle object.
+
+    - dates: ['11A Mon', '11A Thu']
+      class: 7
+      reason: Exams
+
+         -->  Obstacle:
+                dates == (2012-04-09 .. 2012-04-12)
+                lessons == [ Lesson:nil,7,nil ]
+                reason == "Exams"
+
+    - date: 5 June
+      classes: 10(1),7
+      reason: Prefect induction
+
+         -->  Obstacle:
+                dates == (2012-06-05 .. 2012-06-05)
+                lessons == [ Lesson:nil,10,1 ; Lesson:nil,7,nil ]
+                reason == "Prefect induction"
+
+Then when Obstacle#match? is called, it is with a Lesson object that has all
+three fields filled, and we use them to determine whether the date, class
+and period match the obstacle.
+
+> Note: if an obstacle doesn't have the period specified, it's because that
+> class only has one lesson that day, so if the class matches, then _of
+> course_ the obstacle affects that lesson.
+
+    def match?(lesson)
+      sr_int "Obstacle#match? -- lesson argument incomplete" unless
+        lesson.fully_specified?
+      match = lesson.schoolday.date.in? @dates and
+                lesson.class_label.in? @class_labels
+      if match and @period.nil?
+        true
+      elsif match and @period == lesson.period
+        true
+      else
+        false
+      end
+    end
+
+The other thing that has to be done is parse the period information on the
+way in -- that is, the "11(4)", for example.  (Done.)
+
+While I'm at it, I'd like to allow a nice easy way to specify a range of
+dates: `- dates: 11A Mon --> 11A Thu`. (Done.)
+
+Now I'm implementing #match?  Wow, I can't believe the code I wrote for it
+just above. It uses @class\_labels and @periods, but I don't have those
+anymore. The point of introducing Lesson was to get rid of those things!
+
+I've done a decent implementation, but the tests are failing. It turns out
+the strings are not being parsed correctly on the way in. That's where I
+pick it up tomorrow.
+
+(20 Feb 2012)
+
+After some fiddling around, it's pretty sweet to see this:
+
+    +----- Report ---------------------------------------------------------------+
+    |                                                                            |
+    |  Obstacle.from_yaml                                                 -      |
+    |    Creates an array of Obstacles                                    PASS   |
+    |    First one: 5 Jun                                                 PASS   |
+    |    Second one: 12B-Wed                                              PASS   |
+    |    Third one: 9A Mon --> 9A Thu                                     PASS   |
+    |    Fourth one: Thu 14B 10(0) -- note specific period                PASS   |
+    |    Fifth one: 1A Fri (Sem 2)                                        PASS   |
+    |    Sixth one: 9A-Mon: 12, 11(4)  -- complex class parsing           PASS   |
+    |                                                                            |
+    +----------------------------------------------------------------------------+
+
+It feels like time for a commit. I've introduced Lesson and used it in
+Obstacle. There are other places to use it, sure, but this is a good
+milestone.

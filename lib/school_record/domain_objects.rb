@@ -227,6 +227,28 @@ module SchoolRecord
 
     # --------------------------------------------------------------------------- #
 
+    # A Lesson object simply encapsulates a schoolday, a class label, and a
+    # period. See TimetabledLesson (future implementation) for a more
+    # significant object along these lines. This class is simply a value object
+    # to avoid having to pass multiple parameters around.
+    #
+    # The schoolday and period properties may be nil (see for example the use of
+    # this class in Obstacle), but an error is raised if class_label is nil.
+    class Lesson
+      attr_reader :schoolday, :class_label, :period
+      def initialize(schoolday, class_label, period)
+        sr_int "Incomplete Lesson object (#{class_label})" if class_label.nil?
+        @schoolday, @class_label, @period = schoolday, class_label, period
+      end
+      def to_s()
+        "Lesson: sd=#{schoolday.to_s.inspect} " \
+          "cl=#{class_label.inspect} period=#{period.inspect}"
+      end
+      def inspect() to_s end
+    end  # class Lesson
+
+    # --------------------------------------------------------------------------- #
+
   end  # module DomainObjects
 
   # DO is a useful abbreviation, allowing refs like SR::DO::Note.

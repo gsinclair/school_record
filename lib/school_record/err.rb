@@ -76,5 +76,10 @@ module SchoolRecord
       msg = "Invalid date (not this year): #{string}"
       raise SR::SRError, msg
     end
+
+    def obstacle_yaml string
+      msg = "Invalid Obstacle YAML: #{string.inspect}"
+      raise SR::SRError, msg
+    end
   end
 end

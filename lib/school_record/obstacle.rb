@@ -31,20 +31,26 @@ module SchoolRecord
   # smarts they do is determine whether this particular obstacle matches a given
   # schoolday and class label.
   class Obstacle
-    def initialize(schooldays, class_labels, period, reason)
-      @schooldays, @class_labels, @period, @reason =
-        schooldays, class_labels, period, reason
+    def initialize(dates, lessons, reason)
+      @dates, @lessons, @reason = dates, lessons, reason
     end
     private :initialize
 
-    attr_reader :schooldays, :class_labels, :period, :reason
+    attr_reader :dates, :reason
 
-    # An obstacle "matches" a schoolday and class label if the schoolday is
-    # within the obstacle's range and if the class label is one of the
-    # obstacle's class labels.
-    # What we do about the period information, if there is any, I'm not sure.
-    def match?(schoolday, class_label)
-      date_match?(schoolday) and class_label.in? @class_labels
+    # An obstacle "matches" a given lesson only if the date is within this
+    # obstacle's date range and the class label matches as well. If a specific
+    # period applies to a class -- say the spec was "classes: 7, 11(4)" -- then
+    # the period of the given lesson must match as well.
+    def match?(lesson)
+#      sr_int "Obstacle#match? -- lesson argument incomplete" unless
+#        lesson.fully_specified?
+      true
+      lesson.schoolday.date.in? @dates and
+        @lessons.any? { |spec|
+          spec.class_label == lesson.class_label and
+            (spec.period.nil? or spec.period == lesson.period)
+        }
     end
 
     def Obstacle.from_yaml(calendar, string)
@@ -55,16 +61,12 @@ module SchoolRecord
       # Implemented below.
     end
 
-    private
-    def date_match?(schoolday)
-      case @schooldays.size
-      when 1
-        @schooldays.first == schoolday
-      when 2
-        @schooldays.first <= schoolday and schoolday <= @schooldays.last
-      else
-        sr_int "Obstacle #{self} should have 1 or 2 'schooldays'"
-      end
+    def to_s
+      x = %{
+        | Obstacle: dates=#{@dates}
+        |           lessons=#{@lessons}
+        |           reason=#{@reason}
+      }.margin
     end
   end  # class Obstacle
 end  # module SchoolRecord
@@ -108,8 +110,8 @@ class SR::Obstacle::ObstacleCreator
   end
 
   private
-  def error
-    sr_err :obstacle_yaml
+  def error(str)
+    sr_err :obstacle_yaml, str
   end
 
   # Arguments: array of hashes, each containing info about an obstacle, and the
@@ -126,23 +128,29 @@ class SR::Obstacle::ObstacleCreator
   #  * date can be singular or plural, and is semester-sensitive
   #  * class can be singular or plural, and may be an integer instead of a string
   def create_obstacle(hash, semester)
-    dates = Array(hash.values_at("date", "dates").compact).flatten
-    error unless dates.size.in? (1..2)
+    dates = hash.values_at("date", "dates").compact
+    error unless dates.size == 1
+    dates = dates.first.split(" --> ")
     error unless dates.all? { |d| d.class.in? [String, Date] }
     schooldays = dates.map { |d| schoolday(d, semester) }
+    dates = (schooldays.first.date .. schooldays.last.date)
 
-    class_labels = hash.values_at("class", "classes").compact
-    error unless class_labels.size == 1
-    class_labels = class_labels.first.to_s.split(/, */)
-
-    period = hash["period"]
-    error if period and not (Integer === period and period > 0)
+    lesson_spec = hash.values_at("class", "classes").compact
+    error unless lesson_spec.size == 1
+    lesson_spec = lesson_spec.first.to_s.split(/, */)
+    lessons = lesson_spec.map { |str|
+      class_label, period = parse_lesson_spec(str)
+      SR::DO::Lesson.new(nil, class_label, period)
+    }
 
     reason = hash["reason"]
     error unless String === reason
     error if reason == ""
 
-    SR::Obstacle.new(schooldays, class_labels, period, reason)
+    SR::Obstacle.new(dates, lessons, reason).tap do |o|
+      debug "Obstacle created:"
+      debug o.to_s.indent(8)
+    end
   end
 
   # Generates a SchoolDay object, as per Calendar#schoolday, but the string
@@ -153,6 +161,19 @@ class SR::Obstacle::ObstacleCreator
     date_str << " #{Date.today.year}" if ds.contains_only?(:month, :mday)
     date_str << " Sem#{semester}" if ds.contains_only?(:wday, :sem_week)
     @calendar.schoolday(date_str)
+  end
+
+  # Returns class_label and period. Period may be nil.
+  #   "10"      -> [10,nil]
+  #   "10(4)"   -> [10,4]
+  # Error if class_label is nil.
+  def parse_lesson_spec(str)
+    class_label, period = str.split '('
+    error(str) if class_label.nil?
+    if period
+      period = period[/\d+/].to_i
+    end
+    [class_label, period]
   end
 end  # class SR::Obstacle::ObstacleCreator
 

@@ -1,20 +1,20 @@
-
-Term1:
-  - date: 3A-Thu
-    class: 11
-    reason: Careers seminar
-Term2:
+Sem1:
+  - date: 5 June
+    classes: 7, 10
+    reason: Moderator's assembly
   - date: 12B-Wed
     class: 7
     reason: Geography excursion
-  - dates: ["9A-Mon", "9A-Thu"]
+  - dates: 9A Mon --> 9A Thu
     class: 7
     reason: Exams
-Term3:
-  - dates: ["2B-Wed", "3A-Fri"]
-    class: 10
-    reason: Exams
-Term4:
-  - date: 16B-Thu
-    class: 10
-    reason: Self-defence
+  - date: Thu 14B
+    class: 10(0)
+    reason: I can't make early lesson
+Sem2:
+  - date: 1A Fri
+    class: 12
+    reason: Yr12 Study Day
+  - date: 9A-Mon
+    class: 12, 11(4)
+    reason: Prefect induction

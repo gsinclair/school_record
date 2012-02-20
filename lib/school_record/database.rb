@@ -50,6 +50,8 @@ module SchoolRecord
       @label = label
       @files = Files.new(directory)
       @classes = load_class_lists
+      @calendar = SR::Calendar.new( @files.calendar_file )
+      @obstacles = SR::Obstacle.from_yaml(@calendar, @files.obstacles_file.read)
         # { '7' -> (SchoolClass), '10' -> (SchoolClass), ... }
       @notes = load_notes
         # { '7' -> [Note, Note, ...], ... }
@@ -189,7 +191,7 @@ module SchoolRecord
     # Calendar.
 
     def calendar
-      @calendar ||= SR::Calendar.new( @files.calendar_file )
+      @calendar
     end
 
     # Lessons (as in LessonDescriptions).
@@ -259,6 +261,9 @@ module SchoolRecord
     end
     def calendar_file
       @cf ||= @directory + "Config/calendar.yaml"
+    end
+    def obstacles_file
+      @of ||= @directory + "Config/obstacles.yaml"
     end
     def sqlite_database_file
       @sqlite ||= @directory.realpath + "lessons_and_notes.db"

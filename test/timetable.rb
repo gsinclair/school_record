@@ -14,19 +14,15 @@ D "Timetable" do
     sd08 = SR::DO::SchoolDay.new(date + 9,  1, 4)
     sd09 = SR::DO::SchoolDay.new(date + 10, 1, 4)
     sd10 = SR::DO::SchoolDay.new(date + 11, 1, 4)
-    Eq timetable.class_labels_only(sd01), ['10','11','7','12']
-    Eq timetable.class_labels_only(sd02), ['10','12','11','7']
-    Eq timetable.class_labels_only(sd03), ['11','12','7','10']
-    Eq timetable.class_labels_only(sd04), ['10','10','7','12']
-    Eq timetable.class_labels_only(sd05), ['11','11','10','7']
-    Eq timetable.class_labels_only(sd06), ['10','7','12','11']
-    Eq timetable.class_labels_only(sd07), ['10','12','12','7']
-    Eq timetable.class_labels_only(sd08), ['12','11','10','7']
-    Eq timetable.class_labels_only(sd09), ['10','10','7','11']
-    Eq timetable.class_labels_only(sd10), ['10','7','12','11']
-    Eq timetable.classes(sd01), [ ['10',0], ['11',1], ['7',4], ['12',5] ]
-    Eq timetable.classes(sd04), [ ['10',0], ['10',1], ['7',2], ['12',5] ]
-    Eq timetable.classes(sd05), [ ['11',1], ['11',2], ['10',4], ['7',5] ]
-    Eq timetable.classes(sd07), [ ['10',2], ['12',3], ['12',4], ['7',6] ]
+    Eq timetable.lessons_export_string(sd01), "10(0), 11(1), 7(4), 12(5)"
+    Eq timetable.lessons_export_string(sd02), "10(2), 12(3), 11(4), 7(5)" 
+    Eq timetable.lessons_export_string(sd03), "11(1), 12(2), 7(4), 10(5)"
+    Eq timetable.lessons_export_string(sd04), "10(0), 10(1), 7(2), 12(5)"
+    Eq timetable.lessons_export_string(sd05), "11(1), 11(2), 10(4), 7(5)"
+    Eq timetable.lessons_export_string(sd06), "10(0), 7(1), 12(3), 11(5)"
+    Eq timetable.lessons_export_string(sd07), "10(2), 12(3), 12(4), 7(6)"
+    Eq timetable.lessons_export_string(sd08), "12(1), 11(2), 10(5), 7(6)"
+    Eq timetable.lessons_export_string(sd09), "10(0), 10(1), 7(2), 11(5)"
+    Eq timetable.lessons_export_string(sd10), "10(3), 7(4), 12(5), 11(6)"
   end
 end

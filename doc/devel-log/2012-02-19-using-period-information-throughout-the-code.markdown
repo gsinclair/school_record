@@ -222,4 +222,104 @@ After some fiddling around, it's pretty sweet to see this:
 
 It feels like time for a commit. I've introduced Lesson and used it in
 Obstacle. There are other places to use it, sure, but this is a good
-milestone.
+milestone.  Commit message:
+
+     Introduced lightweight Lesson class; completed Obstacle
+
+     * Lesson is a value object, essentially for passing parameters
+       (schoolday, class_label, period).
+     * Obstacle now uses Lesson objects and is implemented and tested
+       properly, paving the way to...
+     * TimetabledLesson (implemented but not used or tested) is a slightly
+       mode robust class which encapsulates a lesson that is timetabled,
+       but knows about any obstacles. (It's not a smart object; it needs
+       to be told of the obstacles.) This paves the way for...
+     * Database#timetabled_lessons, coming soon.
+
+There are two things I could work on now.
+
+* Use Lesson in more places.
+* Implement Database#timetabled\_lessons.
+
+I think I'll do them in that order.
+
+## Use Lesson whereever possible, and make all code period-aware
+
+Here is the output of `tree lib` with comments on actual or potential
+`Lesson` usage.
+
+    +--lib
+       +--school_record/
+          +--app.rb                        N/A
+          +--calendar.rb                   N/A, but could use DateString
+          +--command.rb                    slight potential [1]
+          +--database.rb                   surprisingly little [2]
+          +--date_string.rb                N/A
+          +--domain_objects.rb             N/A
+          +--err.rb                        N/A
+          +--lesson_description.rb         N/A; very straightforward class
+          +--obstacle.rb                   already using it
+          +--report/
+          +--report.rb                     N/A
+          +--timetable.rb                  clearly should use it [3]
+          +--timetabled_lesson.rb          probably not [4]
+          +--util.rb                       N/A
+          +--version.rb                    N/A
+       +--school_record.rb                 N/A
+
+**[1]** The EnterLesson command calls `@db.store_lesson(date_string,
+class_label, description)`. That method is not properly implemented yet.
+Lesson could possibly be used here, but it feels like forcing it. In this
+case, EnterLesson would be responsible for calling @db.schoolday, which may
+not be a bad thing: it could catch an exception and inform the user
+properly.
+
+**[2]** The only place I can see in Database that could use Lesson is
+`store_lesson`, but that will be reimplemented from scratch soon and will be
+using TimetabledLesson, not Lesson. Speaking of which, however, of course
+`Database#timetabled_lesson` will be using Lesson. Another aside here: there
+is some serious cruft to be removed from Database.
+
+**[3]** Timetable currently has classes(), which returns an array of class
+labels and periods. This is what Lessons what designed for! Probably should
+use Lessons as internal representation. We'll see.
+
+**[4]** TimetabledLesson could _have-a_ Lesson, clearly: it possesses
+exactly the same properties, with the addition only of an obstacle. I won't
+do this just for the sake of it though. Better would be inheritance, and
+there is probably something to that, but I won't do that for the sake of it
+either. TimetabledLesson is a simple enough class that there is no need to
+be clever about it.
+
+So after all that, I have:
+
+* Timetable must be changed to use Lesson right now!
+* Database will use it in `timetabled_lesson` and probably nowhere else.
+* EnterLesson deserves consideration.
+* Some cruft to be removed from Database and Timetable.
+* Calendar should make use of DateString.
+
+I'm surprised there is not more code that needs to be made period-aware. I
+guess that just comes from focusing on one part of the system for so long.
+
+...
+
+I've changed Timetable::Day to use Lessons for internal representation. (A
+Day is just an array of Lessons.) The API of Timetable is not totally
+settled. class\_labels\_only() is really just for testing at this stage.
+There's probably a better way, even if it's a method designed entirely for
+testing, like
+
+    Eq timetable.lessons_export_string(sd), "7(1), 12(3), 12(4), 10(6)"
+
+Hmmm... good idea, actually!  Done.
+
+Anyway, the API will develop as I implement Database#timetabled\_lesson.
+
+OK, timetable tests pass now, and look much better too.
+
+Committed.
+
+Just a thought, while I'm here: the 'schoolday' property in Lesson appears
+to be getting zero use so far. Perhaps I can remove it after
+timetabled\_lessons is implemented.

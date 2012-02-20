@@ -6,7 +6,7 @@ module SchoolRecord
     # 'array' contains strings like "_,_,7,_,10,9,_". We turn these into Day
     # objects.
     def initialize(array, valid_class_labels)
-      @days = array.map { |x| Day.new(x, valid_class_labels) }
+      @days = array.map { |x| Day.from_string(x, valid_class_labels) }
     end
     private :initialize
 
@@ -16,10 +16,9 @@ module SchoolRecord
       @days[schoolday.day_of_cycle - 1].class_labels_only
     end
 
-    # Returns array of classes and the periods they are on.
-    # -> [ ['10',0], ['10',1], ['7',2], ['12',5] ]
-    def classes(schoolday)
-      @days[schoolday.day_of_cycle - 1].classes
+    # Designed for testing.  Emits a string like "7(1), 11(3), 11(4), 10(6)".
+    def lessons_export_string(schoolday)
+      @days[schoolday.day_of_cycle - 1].lessons_export_string
     end
 
     # Takes a Pathname object.
@@ -32,34 +31,48 @@ module SchoolRecord
       weekB = hash["WeekB"]
       days += %w(Mon Tue Wed Thu Fri).map { |day| weekB[day] }
       unless Array === days and days.size == 10 and days.first.is_a? String
-        sr_int "Timetable.from_hash: invalid timetable config file #{path.to_s}"
+        sr_err :invalid_timetable, path.to_s
       end
       Timetable.new(days, valid_class_labels)
     rescue SR::SRError
-      sr_int "Timetable.from_hash: invalid timetable config file #{path.to_s}"
+      sr_err :invalid_timetable, path.to_s
     end
 
     class Day
       # Input: "_,_,7,_,10,9,_"
-      def initialize(string, valid_class_labels)
+      # Seven periods in a day (enforced): first one is before school.
+      def Day.from_string(string, valid_class_labels)
+        @error = lambda { sr_err :invalid_timetable, string }
         periods = string.split(',')
-        error unless periods.size == 7
-        error unless periods.all? { |p| p.in? valid_class_labels or p == '_' }
-        @periods = periods   # [ '_', '_', '7', '_', '10', '9', '_' ]
+        error[] unless periods.size == 7
+        error[] unless periods.all? { |p| p.in? valid_class_labels or p == '_' }
+        lessons = periods.map.with_index { |cl, pd|
+          if cl == '_'
+            nil
+          else
+            SR::DO::Lesson.new(nil, cl, pd)
+          end
+        }.compact
+        Day.new(lessons)
+      end
+
+      def initialize(lessons)
+        @lessons = lessons
       end
 
       def class_labels_only
-        # Cache this?
-        @periods.select { |cl| cl != '_' }
+        # Cache this?  Better yet: discover it's not used and get rid of it.
+        @lessons.map { |l| l.class_label }
       end
 
-      def classes
-        # Cache this?
-        (@periods).zip(0..6).select { |cl, pd| cl != '_' }
+      # Designed for testing.
+      def lessons_export_string
+        @lessons.map { |l| "#{l.class_label}(#{l.period})" }.join(', ')
       end
 
-      def error
-        sr_err :invalid_timetable
+      def lessons
+        # Is 'dup' necessary?  Is this method even necessary? Is there a better API?
+        @lessons.dup
       end
     end  # class Day
   end  # class Timetable

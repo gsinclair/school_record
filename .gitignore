@@ -7,3 +7,4 @@ tags
 etc/dev-db/notes.yaml
 commit_message.txt
 etc/dev-db/lessons_and_notes.db
+test/db/lessons_and_notes.db

@@ -10,16 +10,22 @@ module SchoolRecord
     end
     private :initialize
 
-    # Returns just the class labels.
-    # -> [ '10', '10', '7', '12' ]
-    def class_labels_only(schoolday)
-      @days[schoolday.day_of_cycle - 1].class_labels_only
+    # Designed for testing.  Emits a string like "7(1), 11(3), 11(4), 10(6)".
+    def lessons_export_string(day_of_cycle)
+      validate(day_of_cycle)
+      @days[day_of_cycle - 1].lessons_export_string
     end
 
-    # Designed for testing.  Emits a string like "7(1), 11(3), 11(4), 10(6)".
-    def lessons_export_string(schoolday)
-      @days[schoolday.day_of_cycle - 1].lessons_export_string
+    # Returns [Lesson].
+    def lessons(day_of_cycle)
+      validate(day_of_cycle)
+      @days[day_of_cycle - 1].lessons
     end
+
+    def validate(day_of_cycle)
+      sr_int "Invalid day_of_cycle: #{day_of_cycle}" unless day_of_cycle.in? (1..10)
+    end
+    private :validate
 
     # Takes a Pathname object.
     # valid_class_labels is an array like ['7', '10', '11', '12'].
@@ -37,6 +43,7 @@ module SchoolRecord
     rescue SR::SRError
       sr_err :invalid_timetable, path.to_s
     end
+
 
     class Day
       # Input: "_,_,7,_,10,9,_"
@@ -58,11 +65,6 @@ module SchoolRecord
 
       def initialize(lessons)
         @lessons = lessons
-      end
-
-      def class_labels_only
-        # Cache this?  Better yet: discover it's not used and get rid of it.
-        @lessons.map { |l| l.class_label }
       end
 
       # Designed for testing.

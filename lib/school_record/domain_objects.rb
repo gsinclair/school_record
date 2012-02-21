@@ -235,14 +235,13 @@ module SchoolRecord
     # The schoolday and period properties may be nil (see for example the use of
     # this class in Obstacle), but an error is raised if class_label is nil.
     class Lesson
-      attr_reader :schoolday, :class_label, :period
-      def initialize(schoolday, class_label, period)
+      attr_reader :class_label, :period
+      def initialize(class_label, period)
         sr_int "Incomplete Lesson object (#{class_label})" if class_label.nil?
-        @schoolday, @class_label, @period = schoolday, class_label, period
+        @class_label, @period = class_label, period
       end
       def to_s()
-        "Lesson: sd=#{schoolday.to_s.inspect} " \
-          "cl=#{class_label.inspect} period=#{period.inspect}"
+        "Lesson: cl=#{class_label.inspect} pd=#{period.inspect}"
       end
       def inspect() to_s end
     end  # class Lesson

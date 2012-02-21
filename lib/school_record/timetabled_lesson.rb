@@ -13,9 +13,9 @@ module SchoolRecord
   class TimetabledLesson
     attr_reader :schoolday, :class_label, :period, :obstacle
 
-    def initialize(lesson, obstacle=nil)
+    def initialize(schoolday, lesson, obstacle=nil)
       @schoolday, @class_label, @period =
-        lesson.schoolday, lesson.class_label, lesson.period
+        schoolday, lesson.class_label, lesson.period
       @obstacle = obstacle
       validate
     end

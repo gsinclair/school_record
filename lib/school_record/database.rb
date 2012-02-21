@@ -194,6 +194,16 @@ module SchoolRecord
       @calendar
     end
 
+    # Returns array of TimetabledLesson objects representing the lessons that
+    # are _supposed_ to happen on the given day. If there is an obstacle, the
+    # TimetabledLesson object will know about it.
+    def timetabled_lessons(schoolday)
+      timetable.lessons(schoolday).map { |lesson|
+        obstacle = @obstacles.find { |o| o.match?(schoolday, lesson) }
+        TimetabledLesson.new(schoolday, lesson, obstacle)
+      }
+    end
+
     # Lessons (as in LessonDescriptions).
 
     # Return:: [LessonDescription, Boolean]

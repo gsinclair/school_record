@@ -42,12 +42,12 @@ module SchoolRecord
     # obstacle's date range and the class label matches as well. If a specific
     # period applies to a class -- say the spec was "classes: 7, 11(4)" -- then
     # the period of the given lesson must match as well.
-    def match?(lesson)
+    def match?(schoolday, lesson)
 #      sr_int "Obstacle#match? -- lesson argument incomplete" unless
 #        lesson.fully_specified?
-      true
-      lesson.schoolday.date.in? @dates and
-        @lessons.any? { |spec|
+      obstacle_lessons = @lessons
+      schoolday.date.in? @dates and
+        obstacle_lessons.any? { |spec|
           spec.class_label == lesson.class_label and
             (spec.period.nil? or spec.period == lesson.period)
         }
@@ -140,7 +140,7 @@ class SR::Obstacle::ObstacleCreator
     lesson_spec = lesson_spec.first.to_s.split(/, */)
     lessons = lesson_spec.map { |str|
       class_label, period = parse_lesson_spec(str)
-      SR::DO::Lesson.new(nil, class_label, period)
+      SR::DO::Lesson.new(class_label, period)
     }
 
     reason = hash["reason"]

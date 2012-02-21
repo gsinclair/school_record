@@ -57,7 +57,7 @@ module SchoolRecord
           if cl == '_'
             nil
           else
-            SR::DO::Lesson.new(nil, cl, pd)
+            SR::DO::Lesson.new(cl, pd)
           end
         }.compact
         Day.new(lessons)

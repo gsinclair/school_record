@@ -1,6 +1,6 @@
 
 def L(*args)
-  args << nil if args.size == 2
+  args << nil if args.size == 1
   SR::DO::Lesson.new(*args)
 end
 
@@ -46,14 +46,14 @@ D "Obstacle.from_yaml" do
     # todo: test ob.dates
     # Eq ob.class_labels, ['7', '10']    -- no longer applicable?
     Eq ob.reason, "Moderator's assembly"
-    T  ob.match?( L(sd_5_jun, '7') )
-    T  ob.match?( L(sd_5_jun, '10') )
-    F  ob.match?( L(sd_5_jun, '11') )
-    F  ob.match?( L(sd_5_jun, '12') )
-    F  ob.match?( L(sd_6_jun, '7') )
-    F  ob.match?( L(sd_6_jun, '10') )
-    F  ob.match?( L(sd_6_jun, '11') )
-    F  ob.match?( L(sd_6_jun, '12') )
+    T  ob.match?( sd_5_jun, L('7') )
+    T  ob.match?( sd_5_jun, L('10') )
+    F  ob.match?( sd_5_jun, L('11') )
+    F  ob.match?( sd_5_jun, L('12') )
+    F  ob.match?( sd_6_jun, L('7') )
+    F  ob.match?( sd_6_jun, L('10') )
+    F  ob.match?( sd_6_jun, L('11') )
+    F  ob.match?( sd_6_jun, L('12') )
   end
   D "Second one: 12B-Wed" do
     # - date: 12B-Wed
@@ -65,12 +65,12 @@ D "Obstacle.from_yaml" do
     # todo: test ob.dates
     # Eq ob.class_labels, ['7']      -- no longer applicable?
     Eq ob.reason, "Geography excursion"
-    T  ob.match?( L(sd_12b_wed, '7') )
-    F  ob.match?( L(sd_12b_wed, '10') )
-    F  ob.match?( L(sd_12b_wed, '11') )
-    F  ob.match?( L(sd_12b_wed, '12') )
-    F  ob.match?( L(sd_12b_thu, '7') )
-    F  ob.match?( L(sd_12b_thu, '10') )
+    T  ob.match?( sd_12b_wed, L('7') )
+    F  ob.match?( sd_12b_wed, L('10') )
+    F  ob.match?( sd_12b_wed, L('11') )
+    F  ob.match?( sd_12b_wed, L('12') )
+    F  ob.match?( sd_12b_thu, L('7') )
+    F  ob.match?( sd_12b_thu, L('10') )
   end
   D "Third one: 9A Mon --> 9A Thu" do
     # - dates: 9A Mon --> 9A Thu
@@ -85,16 +85,16 @@ D "Obstacle.from_yaml" do
     Eq ob.dates, ( sd_9a_mon.date .. sd_9a_thu.date )
     # Eq ob.class_labels, ['7']      -- no longer applicable?
     Eq ob.reason, "Exams"
-    T  ob.match?( L(sd_9a_mon, '7') )
-    T  ob.match?( L(sd_9a_tue, '7') )
-    T  ob.match?( L(sd_9a_wed, '7') )
-    T  ob.match?( L(sd_9a_thu, '7') )
-    F  ob.match?( L(sd_9a_fri, '7') )
-    F  ob.match?( L(sd_9a_mon, '11') )
-    F  ob.match?( L(sd_9a_tue, '11') )
-    F  ob.match?( L(sd_9a_wed, '11') )
-    F  ob.match?( L(sd_9a_thu, '11') )
-    F  ob.match?( L(sd_9a_fri, '11') )
+    T  ob.match?( sd_9a_mon, L('7') )
+    T  ob.match?( sd_9a_tue, L('7') )
+    T  ob.match?( sd_9a_wed, L('7') )
+    T  ob.match?( sd_9a_thu, L('7') )
+    F  ob.match?( sd_9a_fri, L('7') )
+    F  ob.match?( sd_9a_mon, L('11') )
+    F  ob.match?( sd_9a_tue, L('11') )
+    F  ob.match?( sd_9a_wed, L('11') )
+    F  ob.match?( sd_9a_thu, L('11') )
+    F  ob.match?( sd_9a_fri, L('11') )
   end
   D "Fourth one: Thu 14B 10(0) -- note specific period" do
     # - date: Thu 14B
@@ -104,10 +104,10 @@ D "Obstacle.from_yaml" do
     sd_14b_thu = @cal.schoolday("Sem1 Thu 14B")
     sd_14b_fri = @cal.schoolday("Sem1 Fri 14B")
     Eq ob.reason, "I can't make early lesson"
-    T  ob.match?( L(sd_14b_thu, '10', 0) )
-    F  ob.match?( L(sd_14b_thu, '10', 1) )
-    F  ob.match?( L(sd_14b_thu, '7',  2) )
-    F  ob.match?( L(sd_14b_fri, '10', 0) )
+    T  ob.match?( sd_14b_thu, L('10', 0) )
+    F  ob.match?( sd_14b_thu, L('10', 1) )
+    F  ob.match?( sd_14b_thu, L('7',  2) )
+    F  ob.match?( sd_14b_fri, L('10', 0) )
   end
   D "Fifth one: 1A Fri (Sem 2)" do
     # Sem2:
@@ -118,7 +118,7 @@ D "Obstacle.from_yaml" do
     sd_1a_fri = @cal.schoolday("Sem2 1A Fri")
     Eq ob.dates, (sd_1a_fri.date .. sd_1a_fri.date)
     Eq ob.reason, "Yr12 Study Day"
-    T  ob.match?( L(sd_1a_fri, '12', 4))
+    T  ob.match?( sd_1a_fri, L('12', 4))
   end
   D "Sixth one: 9A-Mon: 12, 11(4)  -- complex class parsing" do
     #   - date: 9A-Mon
@@ -128,10 +128,10 @@ D "Obstacle.from_yaml" do
     sd_9a_mon = @cal.schoolday("Sem2 9A Mon")
     Eq ob.dates, (sd_9a_mon.date .. sd_9a_mon.date)
     Eq ob.reason, "Prefect induction"
-    T  ob.match?( L(sd_9a_mon, '12', 1) )
-    T  ob.match?( L(sd_9a_mon, '12', 2) )
-    T  ob.match?( L(sd_9a_mon, '11', 4) )
-    F  ob.match?( L(sd_9a_mon, '11', 5) )
+    T  ob.match?( sd_9a_mon, L('12', 1) )
+    T  ob.match?( sd_9a_mon, L('12', 2) )
+    T  ob.match?( sd_9a_mon, L('11', 4) )
+    F  ob.match?( sd_9a_mon, L('11', 5) )
   end
 
 end  # Obstacle.from_yaml

@@ -16,12 +16,23 @@ module SchoolRecord
     def initialize(schoolday, lesson, obstacle=nil)
       @schoolday, @class_label, @period =
         schoolday, lesson.class_label, lesson.period
+      @lesson = lesson
       @obstacle = obstacle
       validate
     end
 
     def obstacle?
       @obstacle != nil
+    end
+
+    # E.g. TimetabledLesson: Sem2 13A Tue; 12(4); nil
+    # E.g. TimetabledLesson: Sem1 8B Fri; 7(1); Moderator's assembly
+    def to_s
+      str = "TimetabledLesson: "
+      str << @schoolday.full_sem_date
+      str << "; " << @lesson.to_s(:brief)
+      str << "; " << (@obstacle ? @obstacle.reason : "nil")
+      str
     end
 
     private

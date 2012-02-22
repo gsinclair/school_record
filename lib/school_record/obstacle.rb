@@ -61,12 +61,29 @@ module SchoolRecord
       # Implemented below.
     end
 
-    def to_s
-      x = %{
-        | Obstacle: dates=#{@dates}
-        |           lessons=#{@lessons}
-        |           reason=#{@reason}
-      }.margin
+    # Examples of brief format:
+    #   Obstacle: 2012-06-05; 11,7(4); Prefect induction 
+    #   Obstacle: 2012-03-29(4days); 10; Yr10 exams
+    # Full version spans three lines.
+    def to_s(format=:full)
+      case format
+      when :full
+        x = %{
+          | Obstacle: dates=#{@dates}
+          |           lessons=#{@lessons}
+          |           reason=#{@reason}
+        }.margin
+      when :brief
+        str = "Obstacle: "
+        str << @dates.first.to_s
+        unless (diff = @dates.last - @dates.first).zero?
+          str << "(#{diff.to_i + 1}days)"
+        end
+        str << "; "
+        str << @lessons.map { |l| l.to_s(:brief) }.join(',')
+        str << "; #{@reason}"
+        str
+      end
     end
   end  # class Obstacle
 end  # module SchoolRecord
@@ -133,6 +150,9 @@ class SR::Obstacle::ObstacleCreator
     dates = dates.first.split(" --> ")
     error unless dates.all? { |d| d.class.in? [String, Date] }
     schooldays = dates.map { |d| schoolday(d, semester) }
+    if schooldays.any? { |sd| sd.nil? }
+      sr_err :not_a_school_day, dates
+    end
     dates = (schooldays.first.date .. schooldays.last.date)
 
     lesson_spec = hash.values_at("class", "classes").compact

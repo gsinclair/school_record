@@ -240,8 +240,13 @@ module SchoolRecord
         sr_int "Incomplete Lesson object (#{class_label})" if class_label.nil?
         @class_label, @period = class_label, period
       end
-      def to_s()
-        "Lesson: cl=#{class_label.inspect} pd=#{period.inspect}"
+      def to_s(format=:full)
+        case format
+        when :full
+          "Lesson: cl=#{class_label.inspect} pd=#{period.inspect}"
+        when :brief
+          @class_label + (@period ? "(#@period)" : "")
+        end
       end
       def inspect() to_s end
     end  # class Lesson

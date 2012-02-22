@@ -81,5 +81,10 @@ module SchoolRecord
       msg = "Invalid Obstacle YAML: #{string.inspect}"
       raise SR::SRError, msg
     end
+
+    def not_a_school_day object
+      msg = "Not a school day: #{object.inspect}"
+      raise SR::SRError, msg
+    end
   end
 end

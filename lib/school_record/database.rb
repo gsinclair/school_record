@@ -41,6 +41,21 @@ module SchoolRecord
       end
     end
 
+    # Returns the current database. This is designed for one case only: for
+    # the Datamapper::Property::SchoolDay type to gain access to the calendar.
+    # Any other class that needs a Database object should have it passed in.
+    # (Maybe there's some way for that to happen with DataMapper too, but I
+    # don't think so, because its configuration is global.)
+    #
+    # If no current database exists, an internal error is raised.
+    def Database.current
+      if @database
+        @database
+      else
+        sr_int "Trying to access current Database but none is loaded"
+      end
+    end
+
     # This method is called only by Database.dev or Database.test or
     # Database.prd, and it's only called once (for each of those), so we should
     # do _all_ setup related to the database here, including setting up
@@ -58,8 +73,6 @@ module SchoolRecord
       initialize_datamapper(@files.sqlite_database_file)
       require 'school_record/lesson_description'
       finalize_datamapper
-      debug "There are #{LessonDescription.all.count} lessons in the database."
-      debug LessonDescription.all.map { |l| l.inspect }.join("\n")
     end
     private :initialize
 
@@ -196,6 +209,14 @@ module SchoolRecord
 
     def schoolday(date_string)
       @calendar.schoolday(date_string)
+    end
+
+    def schoolday!(date_string)
+      if (sd = schoolday(date_string)).nil?
+        err :not_a_school_day, date_string
+      else
+        sd
+      end
     end
 
     # Returns array of TimetabledLesson objects representing the lessons that

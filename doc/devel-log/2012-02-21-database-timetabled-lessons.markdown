@@ -217,3 +217,12 @@ improved the situation by raising an appropriate error message in that
 situation. Tests are passing now.
 
 I declare Database#timetabled\_lesson working and am committing the code.
+
+    Database#timetabled_lessons tested and working
+
+    * Couple of changes to the code of the method itself.
+    * Lesson and Obstacle got to_s(:brief).
+    * Error raised if obstacle config contains non-school day.
+    * TimetabledLesson got to_s, enabling easier testing.
+    * test/database.rb contains the tests for timetabled_lessons.
+    * Obstacle config got a new entry with lessons "12(3), 10(2)"

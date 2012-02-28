@@ -25,6 +25,17 @@ module SchoolRecord
       @obstacle != nil
     end
 
+    # Retrieves the description for this lesson from the database by searching
+    # against the schoolday, class_label and period. Caches for future calls.
+    # Returns nil if the corresponding lesson is not found in the database.
+    # (Does not cache in that case.)
+    def description
+      @description ||= (
+        ld = LessonDescription.find_by_schoolday_and_lesson(@schoolday, @lesson)
+        ld && ld.description
+      )
+    end
+
     # E.g. TimetabledLesson: Sem2 13A Tue; 12(4); nil
     # E.g. TimetabledLesson: Sem1 8B Fri; 7(1); Moderator's assembly
     def to_s

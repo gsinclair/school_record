@@ -10,7 +10,7 @@ module SchoolRecord
       @db = db
       @out = out || STDOUT
     end
-    def run(args)
+    def run(command, args)
       sr_int "Implement #run in subclass"
     end
     # required_arguments args, 3
@@ -42,7 +42,7 @@ end
 # --------------------------------------------------------------------------- #
 
 class SR::Command::NoteCmd < SR::Command
-  def run(args)
+  def run(command, args)
     class_label, name_fragment, text = required_arguments(args, 3)
     student = @db.resolve_student!(class_label, name_fragment)
     emit "Saving note for student: #{student}"
@@ -65,8 +65,49 @@ end
 
 # --------------------------------------------------------------------------- #
 
-class SR::Command::EnterLesson < SR::Command
-  def run(args)
+class SR::Command::DescribeLesson < SR::Command
+  # E.g. The following two are equivalent and must be handled carefully.
+  #   run("enter", ["10", "yesterday", "Sine rule..."])
+  #   run("10", ["yesterday", "Sine rule..."])
+  def run(command, args)
+    class_label = (command == "enter" ? args.shift : command)
+    err :invalid_class_label unless @db.valid_class_label?(class_label)
+    args = required_arguments(args, 1..2)
+    description, date_string = args.pop, args.pop
+
+    sd = @db.schoolday!(date_str || 'today')
+    emit "Retrieving lessons for #{sd.full_sem_date}"
+    ttls = @db.timetabled_lessons(sd, class_label)
+
+    # We now have all the timetabled lessons for this class on this day.
+    # There could be obstacles, though. Report to the user if there are. Select
+    # the first non-obstacled, non-described lesson for saving the description.
+    if ttls.empty?
+      emit "  - no lessons for #{class_label} on this date"
+      exit!
+    end
+
+    lesson = ttls.find { |l| l.obstacle.nil? and l.description.nil? }
+    if lesson
+      lesson.store_description(description)
+      emit "Stored description in period #{lesson.period}"
+    else
+      # Report to the user.
+      pds = ttls.map { |l| l.period }.join(', ')
+      emit "#{class_label} lessons for #{sd.sem_date}: #{pds}"
+      ttls.each do |l|
+        if l.obstacle?
+          emit "- can't store in pd #{l.period}: #{l.obstacle.reason}"
+        elsif l.description
+          emit "- can't store in pd #{l.period}: already described"
+          emit l.description.indent(8)
+        end
+      end
+    end
+  end
+
+
+  def runx(command, args)
     class_label, description = required_arguments(args, 2)
     date_string = 'today'           # Maybe have a way to specify this.
     # Basically, we hand this to Database. It can check whether this lesson has
@@ -81,11 +122,20 @@ class SR::Command::EnterLesson < SR::Command
   end
   def usage_text
     msg = %{
-      - The 'enter' command takes two arguments:
+      - The 'enter' command takes two or three arguments:
       -   * class label
+      -   * date string (optional; use quotes if necessary)
       -   * string describing the lesson (use quotes)
       - Example:
       -   sr enter 10 "Cosine rule. hw:(7-06 Q1-4)"
+      -   sr enter 10 yesterday "Sine rule"
+      -   sr enter 12 'Fri 3A' "Definite integrals hw:(3.4)"
+      - Example (shortcut):
+      -   sr 11 "Line of best fit"
+      -   sr 11 Fri "Equations with fractions"
+      -
+      - You can't specify the period; this is meant to be simple.
+      - Use the 'edit' command for more complex lesson descriptions.
     }.margin
   end
 end
@@ -104,7 +154,7 @@ class SR::Command::ReportCmd < SR::Command
 #   homework: SR::Report::Homework,
   }
 
-  def run(args)
+  def run(command, args)
     report_type = args.shift
     if report_type.nil?
       help
@@ -127,7 +177,7 @@ end
 # --------------------------------------------------------------------------- #
 
 class SR::Command::EditCmd < SR::Command
-  def run(args)
+  def run(command, args)
     puts "Command: edit"
     puts "Arguments: #{args.inspect}"
   end
@@ -136,7 +186,7 @@ end
 # --------------------------------------------------------------------------- #
 
 class SR::Command::ConfigCmd < SR::Command
-  def run(args)
+  def run(command, args)
     puts "Command: config"
     puts "Arguments: #{args.inspect}"
   end

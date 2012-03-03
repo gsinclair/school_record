@@ -45,7 +45,7 @@ D "Notes report" do
 
   D "Error when class label is invalid" do
     E(SR::SRError) { SR::Report::Notes.new(@db, @out).run(['x', 'JSmith']) }
-    Mt Whitestone.exception.message, /Invalid class label: x/
+    Mt Whitestone.exception.message, /Invalid class label: "x"/
   end
 
   D "Message when there are no notes for given student" do

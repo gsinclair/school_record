@@ -576,3 +576,38 @@ a description.  Done.
 
 Time for a commit. It would be nice to unit-test DescribeLesson#run, but it's
 not going to happen right now.
+
+     Lessons can now be described on the command-line
+     
+     * TimetabledLesson#store_lesson implemented and tested.
+       * Raises error if asked to overwrite existing description.
+     * Every aspect of this command tested interactively (but not automatically)
+       * Will describe first available period in the day, thus allowing for
+         describing double periods with two iterations.
+       * If no suitable lesson is available on the date requested, the user is
+         informed: either that class has no lessons that day, or they're already
+         described, or there is an obstacle.
+     * Database#timetabled_lessons now takes second argument (class label) to
+       filter the results.
+     * SchoolDay#inspect.
+     * The SchoolDay datamapper type now works both ways (it was read-only before)
+       thanks to the method "def custom?() true end". Thanks to Adiel Mittmann on
+       StackOverflow.
+     * Some no-longer-used code and some debugging statements removed.
+
+Soon after, a minor change and another commit.
+
+
+     Error messages have better backtrace
+     
+     Any error initiated by sr_err will now start the backtrace where that
+     call is made, rather than inside sr_err itself.
+
+And then, unit testing of DescribeLesson.
+
+     DescribeLesson command is unit tested
+     
+     * Database#clear_sqlite_database for testing purposes (will only
+       clear the :test database)
+
+Next up: describing a whole day's lessons.

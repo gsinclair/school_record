@@ -60,7 +60,7 @@ module SchoolRecord
 
     def invalid_class_label *args
       label = args.shift
-      msg = "Invalid class label: #{label}"
+      msg = "Invalid class label: #{label.inspect}"
       raise SR::SRError, msg
     end
 

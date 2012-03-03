@@ -72,7 +72,7 @@ class SR::Command::DescribeLesson < SR::Command
   def run(command, args)
     debug "*** DescribeLesson#run ***"
     class_label = (command == "enter" ? args.shift : command)
-    err :invalid_class_label unless @db.valid_class_label?(class_label)
+    sr_err :invalid_class_label, class_label unless @db.valid_class_label?(class_label)
     args = required_arguments(args, 1..2)
     description, date_string = args.pop, args.pop
 

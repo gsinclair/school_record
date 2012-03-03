@@ -73,6 +73,7 @@ module SchoolRecord
       @notes = load_notes
         # { '7' -> [Note, Note, ...], ... }
       initialize_datamapper(@files.sqlite_database_file)
+      clear_sqlite_database if label == :test
       require 'school_record/lesson_description'
       finalize_datamapper
     end
@@ -85,6 +86,16 @@ module SchoolRecord
       DataMapper.setup(:default, "sqlite3://#{path}")
     end
     private :initialize_datamapper
+
+    def clear_sqlite_database
+      if @label == :test
+        DataMapper.repository(:default).adapter.execute \
+          "delete from school_record_lesson_descriptions"
+      else
+        STDERR.puts "Warn: not clearing #{@label} sqlite database"
+      end
+    end
+    public :clear_sqlite_database
 
     def finalize_datamapper
       DataMapper.finalize

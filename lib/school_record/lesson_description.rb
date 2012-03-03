@@ -6,32 +6,41 @@ module DataMapper
   class Property
     class SchoolDay < DataMapper::Property::String
 
+      def custom?
+        true
+      end
+
       def load(value)
         # Take a string from the database and load it. We need a calendar!
-        case value
+        val = case value
         when ::String then calendar.schoolday(value)
         when ::SR::DO::SchoolDay then value
         else
           sr_int error_message(:load, value)
         end
+        val
       end
 
       def dump(value)
-        case value
+        # Store a SchoolDay value into the database as a string.
+        #trace :caller, binding
+        val = case value
         when SR::DO::SchoolDay
           sd = value
           "Sem#{sd.semester} #{sd.weekstr} #{sd.day}"
         when ::String
           value
         else
-          debug "About to raise error. value == #{value.inspect}"
           sr_int error_message(:dump, value)
         end
+        val
       end
 
       def typecast(value)
-        debug "Called typecast: value == #{value.inspect} (#{value.class})"
-        value
+        # I don't know what this is supposed to do -- that is, when and why it
+        # is called -- but I am aping the behaviour of the Regexp custom type,
+        # which, like this one, stores as a String and loads as something else.
+        load(value)
       end
 
       private
@@ -71,7 +80,9 @@ module SchoolRecord
 
     # 'schoolday' is stored as a string, like "Sem1 3A Fri", but is loaded as a
     # real SR::DO::SchoolDay object, as per the DataMapper::Property::SchoolDay
-    # class defined below.
+    # class defined above.
+
+    #LessonDescription.raise_on_save_failure = true
 
     class << LessonDescription
       def find_by_schoolday_and_lesson(schoolday, lesson)

@@ -202,6 +202,7 @@ module SchoolRecord
 
       # -> "Mon 11A (28 Sep)"
       def to_s() "#{day} #{weekstr} (#{date.day} #{month})" end
+      def inspect() "SD<#{to_s}>" end
 
       # -> 1..10
       def day_of_cycle

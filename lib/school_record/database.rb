@@ -37,6 +37,8 @@ module SchoolRecord
       else
         debug "Loading #{label.to_s.upcase} database"
         @database = Database.new(label, Dirs.database_directory(label))
+        nrows = LessonDescription.all.count
+        debug "Rows in sqlite database: #{nrows}"
         return @database
       end
     end
@@ -222,11 +224,19 @@ module SchoolRecord
     # Returns array of TimetabledLesson objects representing the lessons that
     # are _supposed_ to happen on the given day. If there is an obstacle, the
     # TimetabledLesson object will know about it.
-    def timetabled_lessons(schoolday)
-      timetable.lessons(schoolday.day_of_cycle).map { |lesson|
+    #
+    # If a class_label is provided, only lessons matching that label will be
+    # returned.
+    def timetabled_lessons(schoolday, class_label=nil)
+      ttls = timetable.lessons(schoolday.day_of_cycle).map { |lesson|
         obstacle = @obstacles.find { |o| o.match?(schoolday, lesson) }
         SR::TimetabledLesson.new(schoolday, lesson, obstacle)
       }
+      if class_label
+        ttls.select { |tl| tl.class_label == class_label }
+      else
+        ttls
+      end
     end
 
     # Lessons (as in LessonDescriptions).

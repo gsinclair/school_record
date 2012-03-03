@@ -70,12 +70,13 @@ class SR::Command::DescribeLesson < SR::Command
   #   run("enter", ["10", "yesterday", "Sine rule..."])
   #   run("10", ["yesterday", "Sine rule..."])
   def run(command, args)
+    debug "*** DescribeLesson#run ***"
     class_label = (command == "enter" ? args.shift : command)
     err :invalid_class_label unless @db.valid_class_label?(class_label)
     args = required_arguments(args, 1..2)
     description, date_string = args.pop, args.pop
 
-    sd = @db.schoolday!(date_str || 'today')
+    sd = @db.schoolday!(date_string || 'today')
     emit "Retrieving lessons for #{sd.full_sem_date}"
     ttls = @db.timetabled_lessons(sd, class_label)
 
@@ -94,7 +95,7 @@ class SR::Command::DescribeLesson < SR::Command
     else
       # Report to the user.
       pds = ttls.map { |l| l.period }.join(', ')
-      emit "#{class_label} lessons for #{sd.sem_date}: #{pds}"
+      emit "On #{sd.sem_date}, class #{class_label} has lessons in periods: #{pds}"
       ttls.each do |l|
         if l.obstacle?
           emit "- can't store in pd #{l.period}: #{l.obstacle.reason}"
@@ -106,20 +107,6 @@ class SR::Command::DescribeLesson < SR::Command
     end
   end
 
-
-  def runx(command, args)
-    class_label, description = required_arguments(args, 2)
-    date_string = 'today'           # Maybe have a way to specify this.
-    # Basically, we hand this to Database. It can check whether this lesson has
-    # already been defined, and save it if not.
-    lesson, stored = @db.store_lesson(date_string, class_label, description)
-    if stored
-      emit "Saving lesson record for class #{class_label}"
-    else
-      emit "A lesson for class #{class_label} already exists; not overwriting."
-      emit "Existing description: #{lesson.description}"
-    end
-  end
   def usage_text
     msg = %{
       - The 'enter' command takes two or three arguments:

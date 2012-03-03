@@ -46,6 +46,28 @@ D "TimetabledLesson" do
   end
 
   D "#store_description" do
+    sd = @db.schoolday "Sem1 2A Tue"
+    lesson = SR::DO::Lesson.new('12', 3)
+    tl = SR::TimetabledLesson.new(sd, lesson)
+    # Start by asserting that it doesn't already have a description associated.
+    N tl.description
+    # Now store one.
+    tl.store_description "Simpson's rule"
+    # Check that it is stored.
+    Eq tl.description, "Simpson's rule"
+    # But that could be cached. Try a fresh object.
+    Eq SR::TimetabledLesson.new(sd, lesson).description, "Simpson's rule"
+    # Let's be really paranoid and access the database ourselves.
+    ld = SR::LessonDescription.all(schoolday: sd, class_label: '12', period: 3)
+    Eq ld.size, 1
+    Eq ld.first.description, "Simpson's rule"
+  end
+  D "doesn't overwrite existing record (raises exception)" do
+    sd = @db.schoolday "Sem1 2A Tue"
+    lesson = SR::DO::Lesson.new('12', 3)
+    tl = SR::TimetabledLesson.new(sd, lesson)
+    E(SR::SRError) { tl.store_description "..." }
+    Mt Whitestone.exception.message, /Lesson description exists/
   end
 end
 

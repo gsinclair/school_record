@@ -167,10 +167,7 @@ class SR::Obstacle::ObstacleCreator
     error unless String === reason
     error if reason == ""
 
-    SR::Obstacle.new(dates, lessons, reason).tap do |o|
-      debug "Obstacle created:"
-      debug o.to_s.indent(8)
-    end
+    SR::Obstacle.new(dates, lessons, reason)
   end
 
   # Generates a SchoolDay object, as per Calendar#schoolday, but the string

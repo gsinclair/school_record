@@ -36,6 +36,30 @@ module SchoolRecord
       )
     end
 
+    # If this lesson is already described in the database, raises exception.
+    # If lesson is stored successfully, returns true.
+    # If not, returns false.
+    def store_description(description)
+      if (ld = find_matching_record)
+        sr_err :lesson_description_exists, ld
+      else
+        ld = LessonDescription.create(
+          schoolday:    @schoolday,
+          class_label:  @class_label,
+          period:       @period,
+          description:  description
+        )
+        if ld.saved?
+          true
+        else
+          ld.errors.each do |e|
+            debug "TimetabledLesson#store_description: LessonDescription save error: #{e}"
+          end
+          false
+        end
+      end
+    end
+
     # E.g. TimetabledLesson: Sem2 13A Tue; 12(4); nil
     # E.g. TimetabledLesson: Sem1 8B Fri; 7(1); Moderator's assembly
     def to_s
@@ -47,6 +71,14 @@ module SchoolRecord
     end
 
     private
+    def find_matching_record
+      LessonDescription.first(
+        schoolday:   @schoolday,
+        class_label: @class_label,
+        period:      @period
+      )
+    end
+
     def validate
       error "schoolday" unless DO::SchoolDay === @schoolday
       error "class_label" unless String === @class_label

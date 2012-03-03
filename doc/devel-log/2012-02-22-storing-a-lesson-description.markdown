@@ -53,7 +53,7 @@ this. Database may be able to provide extra support, but schoolday,
 timetabled\_lessons, and the planned additions to TimetabledLesson may be all
 the support it needs.
 
-## Iteration 1
+## Iteration 1: reading lesson description from database
 
 Changed EnterLesson to DescribeLesson.
 
@@ -159,7 +159,7 @@ real date, like "2012-01-30", or even its corresponding Date object, this
 wouldn't be a problem. But that's not such a natural fit when looking at the
 data in the database.
 
-**(27 FEB 2012)**
+**(27-28 FEB 2012)**
 
 I think that if the LessonDescription object is going to work with custom
 strings for school dates in the database, then it should take responsibility for
@@ -384,4 +384,195 @@ descriptions is not our concern at the moment.) But first, a commit.
        encouraged).
      * Database#schoolday!(str) -- raises error if not a schoolday.
 
-(DescribeLesson has blank space at end of line; remove.)
+## Iteration 2: storing lesson description (creating new database row)
+
+(Still 28 FEB 2012)
+
+In DescribeLesson#run, there is the following code:
+
+    lesson = ttls.find { |l| l.obstacle.nil? and l.description.nil? }
+    if lesson
+      lesson.store_description(description)                  # <---- NOTE
+      emit "Stored description in period #{lesson.period}"
+    else
+      # Report to the user.
+      pds = ttls.map { |l| l.period }.join(', ')
+      emit "#{class_label} lessons for #{sd.sem_date}: #{pds}"
+      ttls.each do |l|
+        if l.obstacle?
+          emit "- can't store in pd #{l.period}: #{l.obstacle.reason}"
+        elsif l.description
+          emit "- can't store in pd #{l.period}: already described"
+          emit l.description.indent(8)
+        end
+      end
+    end
+
+This code hasn't been run yet, because the indicated line calls a method that
+hasn't been implemented.
+
+So what does LessonDescription#store\_description do?
+
+* Checks to see if a description is stored there already.
+    * Don't overwrite.
+    - Throw exception? It's kind of unexpected behaviour, but what would
+      Avdi think?
+    - I think it _is_ unexpected: the user should be aware of what lessons need
+      to be described before typing in.
+    - So yes, throw an exception.
+* If not, create a new LessonDescription object (which is implicitly saved).
+
+Pretty simple. Here's a stab at the code:
+
+    def store_description(description)
+      if (ld = find_matching_record)
+        sr_err :lesson_description_exists, ld
+      else
+        LessonDescription.create(
+          schoolday:    @schoolday,
+          class_label:  @class_label,
+          period:       @period,
+          description:  description
+        )
+      end
+    end
+
+OK, I've done it (with suitable find\_matching\_record). Now just test it on the
+command line?
+
+Running `run 10 "Inequalities with x in the denominator"` multiple times, I've
+fixed minor coding errors but have now encountered a big one: the "create" call
+was (silently) failing to save the new object in the database. After researching
+how to work out what's going on, it turns out there is a validation error:
+
+    Schoolday must be of type String
+
+I guess that's because of this line of code:
+
+    class SchoolDay < DataMapper::Property::String
+
+I wish there was proper documentation on creating your own DataMapper types. Now
+I have to look at the custom types again to find what other things inherit from
+and how they behave.
+
+The Regexp one is pretty simple:
+
+    module DataMapper
+      class Property
+        class Regexp < String
+          load_as ::Regexp
+
+          def load(value)
+            ::Regexp.new(value) unless value.nil?
+          end
+
+          def dump(value)
+            value.source unless value.nil?
+          end
+
+          def typecast(value)
+            load(value)
+          end
+
+        end
+      end
+    end
+
+It is clear that a string is stored in the database (just like I want) and a
+different object (Regexp) is presented to the user when that string is loaded
+from the database.
+
+Problem: I can't call that line `load_as ::Regexp` (or `load_as SR::DO::SchoolDay`
+as I would do). My data\_mapper gem is up to date.
+
+I have changed the behaviour of 'typecast':
+
+      def typecast(value)
+        # I don't know what this is supposed to do -- that is, when and why it
+        # is called -- but I am aping the behaviour of the Regexp custom type,
+        # which, like this one, stores as a String and loads as something else.
+        debug "Called typecast: value == #{value.inspect}"
+        load(value)
+      end
+
+It hasn't made any difference, except that I am seeing more calls to 'load' in
+the debug log.
+
+After a lot of hacking (printf debugging, really) I've gotten nowhere, and have
+asked a question on StackOverflow.
+
+**(3 MAR 2012)**
+
+Got an answer on StackOverflow from Adiel Mittmann.
+
+> It seems that the current code of dm-types at github hasn't made it to any
+> official release -- that's why load\_as doesn't work in your example. But try to
+> add this method:
+> 
+>     module DataMapper
+>       class Property
+>         class SchoolDay < DataMapper::Property::String
+> 
+>           def custom?
+>             true
+>           end
+> 
+>         end
+>       end
+>     end
+> 
+> That's working here.
+
+And it works!!!!
+
+    run 10 Fri "..."   # saved in Friday pd 4
+    run 10 Thu "..."   # saved in Thu pd 0
+    run 10 Thu "..."   # saved in Thu pd 1
+    run 10 Thu "..."   # refused to save: no undescribed lessons that day
+
+And the database:
+
+    sqlite> select * from school_record_lesson_descriptions;
+    1|Sem1 5A Fri|10|4|Inequations with x in denominator
+    2|Sem1 5A Thu|10|0|Quadratic inequations
+    3|Sem1 5A Thu|10|1|Graphical methods
+
+Awesome!!!
+
+So TimetabledLesson#store\_description has now been tested on the command-line,
+but not in a unit test.
+
+In fact, I've tested all of DescribeLesson#run on the command-line:
+
+* Lesson desriptions are stored to the database.
+* If there are two periods in the day, they are described in order.
+* If there are no timetabled lessons that are undescribed, the description is
+  not saved and the appropriate reason is given: already described; or obstacle.
+
+I just implemnted the store\_description test:
+
+    D "#store_description" do
+      sd = @db.schoolday "Sem1 2A Tue"
+      lesson = SR::DO::Lesson.new('12', 3)
+      tl = SR::TimetabledLesson.new(sd, lesson)
+      # Start by asserting that it doesn't already have a description associated.
+      N tl.description
+      # Now store one.
+      tl.store_description "Simpson's rule"
+      # Check that it is stored.
+      Eq tl.description, "Simpson's rule"
+      # But that could be cached. Try a fresh object.
+      Eq SR::TimetabledLesson.new(sd, lesson).description, "Simpson's rule"
+      # Let's be really paranoid and access the database ourselves.
+      ld = SR::LessonDescription.all(schoolday: sd, class_label: '12', period: 3)
+      Eq ld.size, 1
+      Eq ld.first.description, "Simpson's rule"
+    end
+
+And it passes. The row is added to the database.
+
+I suppose I should check that it raises an exception if it is asked to overwrite
+a description.  Done.
+
+Time for a commit. It would be nice to unit-test DescribeLesson#run, but it's
+not going to happen right now.

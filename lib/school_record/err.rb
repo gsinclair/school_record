@@ -86,5 +86,12 @@ module SchoolRecord
       msg = "Not a school day: #{object.inspect}"
       raise SR::SRError, msg
     end
+
+    def lesson_description_exists ld
+      msg =  "Lesson description exists; will not overwrite\n"
+      msg << "  Lesson: #{ld.schoolday}; #{ld.class_label}; pd #{ld.period}\n"
+      msg << "  Description: #{ld.description}"
+      raise SR::SRError, msg
+    end
   end
 end

@@ -20,10 +20,13 @@ module SchoolRecord
       else
         sr_int "No such error handling method: #{code}"
       end
+    rescue SRError => e
+      e.set_backtrace caller
+      raise e
     end
 
     def sr_int(msg)
-      raise SR::SRInternalError, msg
+      raise SR::SRInternalError, msg, caller
     end
   end
   ::Object.send :include, SchoolRecord::Err

@@ -9,7 +9,7 @@
 D "TimetabledLesson" do
   D.<< {
     @db = SR::Database.test
-    insert_test_data
+    insert_test_data_ttl
   }
   D "#description" do
     # Normally you would get TimetabledLesson objects via Database#timetabled_lesson.
@@ -71,7 +71,7 @@ D "TimetabledLesson" do
   end
 end
 
-def insert_test_data
+def insert_test_data_ttl
   adapter = DataMapper.repository(:default).adapter
   adapter.execute "delete from school_record_lesson_descriptions"
   data = %{

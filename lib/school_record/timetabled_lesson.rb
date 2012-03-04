@@ -11,7 +11,7 @@ module SchoolRecord
   # By comparison, the lightweight DO::Lesson object is only meant for passing
   # values around, like to TimetabledLesson.new(lesson, obstacle=nil).
   class TimetabledLesson
-    attr_reader :schoolday, :class_label, :period, :obstacle
+    attr_reader :schoolday, :lesson, :class_label, :period, :obstacle
 
     def initialize(schoolday, lesson, obstacle=nil)
       @schoolday, @class_label, @period =

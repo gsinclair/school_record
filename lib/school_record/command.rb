@@ -167,6 +167,10 @@ class SR::Command::EditCmd < SR::Command
   def run(command, args)
     puts "Command: edit"
     puts "Arguments: #{args.inspect}"
+    require 'school_record/edit_file/edit_file'
+    # Use SR::EditFile::Creator.new(@db).create(schooldays) and
+    #     SR::EditFile::Parser.new(@db).parse(file_contents) and
+    #     @db.store_lesson_descriptions(data).
   end
 end
 

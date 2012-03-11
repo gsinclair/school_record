@@ -201,3 +201,57 @@ Implemented and tested.
       end
     end
 
+## Iteration 2: EditFile::Parser
+
+**(11 MAR 2012)**
+
+This took a patchy effort over a large number of days, but now it's done. There
+could be some issues in that I parse "\n\n" as "<PARA>", but we'll see.
+
+As the following code shows, the output of #parse is an array of DayVO objects,
+each of which tells the "schoolday" and an array of LessonVO objects (lesson +
+description). It's a sound representation of the data in the input string, which
+can be traversed for putting into the database.
+
+    D "EditFile::Parser" do
+      D.< {
+        @db = SR::Database.test
+        @parser = SR::EditFile::Parser.new(@db)
+      }
+      D "#parse" do
+        data = @parser.parse(input_string)
+        Ko data, Array
+        Eq data.size, 2
+        day = data.shift
+        Ko day, SR::EditFile::DayVO
+        Eq day.schoolday, @db.schoolday("Sem1 Tue 17A")
+        Eq day.lessons.size, 1
+        Eq day.lessons[0].lesson, SR::DO::Lesson.new('11',4)
+        Eq day.lessons[0].description, \
+          "Tax scales; finding tax payable for a given taxable income from a table. Discussion " \
+          "of gradients when the table information is drawn. <PARA> ex:(5C Q2-4esq)"
+        day = data.shift
+        Ko day, SR::EditFile::DayVO
+        Eq day.lessons.size, 3
+        Eq day.lessons[0].lesson, SR::DO::Lesson.new('11',1)
+        Eq day.lessons[0].description, \
+          "More work on the graphical aspects of tax tables. Tax deductions."
+        Eq day.lessons[1].lesson, SR::DO::Lesson.new('12',2)
+        Eq day.lessons[1].description, \
+          "Radian measure. Ruler demonstration. Examples converting between " \
+          "radians and degrees."
+        Eq day.lessons[2].lesson, SR::DO::Lesson.new('10',5)
+        Eq day.lessons[2].description, \
+          "Working lesson."
+      end
+    end
+
+Time for a commit.
+
+     SR::EditFile::Parser
+         
+     * Implemented and tested.
+     * Lesson#parse(string) added to ease implementation.
+       * Also Lesson#== and Lesson#hash
+     * Parser emits value objects DayVO and LessonVO.
+       * parse(str) -> [DayVO] where DayVO contains schoolday and [LessonVO]

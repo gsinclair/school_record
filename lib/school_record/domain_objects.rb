@@ -250,6 +250,22 @@ module SchoolRecord
         end
       end
       def inspect() to_s end
+      # str: 10(3)
+      def Lesson.parse(str)
+        if str.strip[/^(\w+)\((\d)\)$/]
+          class_label, period = $1, $2.to_i
+          Lesson.new(class_label, period)
+        else
+          sr_int "Can't parse Lesson string: #{str}"
+        end
+      end
+      def ==(other)
+        [self.class, @class_label, @period] ==
+          [other.class, other.class_label, other.period]
+      end
+      def hash
+        [self.class, @class_label, @period].hash
+      end
     end  # class Lesson
 
     # --------------------------------------------------------------------------- #

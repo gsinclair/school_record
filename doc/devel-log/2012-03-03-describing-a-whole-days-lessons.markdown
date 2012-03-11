@@ -255,3 +255,5 @@ Time for a commit.
        * Also Lesson#== and Lesson#hash
      * Parser emits value objects DayVO and LessonVO.
        * parse(str) -> [DayVO] where DayVO contains schoolday and [LessonVO]
+
+One more commit that removes all the debugging statements from the Parser code.

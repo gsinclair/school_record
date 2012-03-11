@@ -10,7 +10,6 @@ module SR::EditFile
     end
     def add_lesson(lesson, description)
       @lessons << LessonVO.new(lesson, description)
-      debug "      DayVO[#{@schoolday.sem_date}] added lesson '#{description[0..10]}...'"
     end
   end
 
@@ -58,19 +57,14 @@ module SR::EditFile
         break if line.nil?
         trace :line, binding
         case line.strip
-        when ""
-          debug "  parse: empty line"
-        when /^#/
-          debug "  parse: comment"
+        when ""   then next
+        when /^#/ then next
         when /^~ Sem/
-          debug "  parse: new day"
           current_day = DayVO.new(parse_day(line))
           days << current_day
         when /^~ \w{1,7}\(\d\) \w\w\w$/
           current_lesson = SR::DO::Lesson.parse(line.split[1])
-          debug "  parse: new lesson -- #{current_lesson}"
           description = extract_description(lines)
-          debug "    extracted description: #{description[0..30]}..."
           current_day.add_lesson(current_lesson, description)
         end
       end
@@ -94,8 +88,6 @@ module SR::EditFile
     end
     def extract_description(lines)
       # Read lines until we get to a directive or the end. Ignore comments.
-      #debug "SR::EditFile::Parser#extract_description"
-      #debug "  - lines = #{lines.inspect}"
       desc_lines = []
       loop do
         if lines.empty? or lines.first =~ /^~ /
@@ -106,7 +98,6 @@ module SR::EditFile
           desc_lines << line.strip
         end
       end
-      #debug "  - desc_lines == #{desc_lines.inspect}"
       # Return a string where paragraph breaks are marked with <PARA> and there
       # are no newlines.
       words = []
@@ -118,7 +109,6 @@ module SR::EditFile
         end
       end
       words = words.flatten.join(' ')
-      #debug "  - words == #{words.inspect}"
       words = words.gsub /(\s*<PARA>\s*)+$/, ""
       words.strip
     end
